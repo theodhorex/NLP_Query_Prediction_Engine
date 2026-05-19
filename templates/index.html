@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Query Prediction System</title>
+    <title>Query Prediction Engine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -11,218 +12,1500 @@
             box-sizing: border-box;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+        :root {
+            --bg-cream: #F7F5F0;
+            --bg-dark: #0B0C0E;
+            --bg-card: #1A1B1F;
+            --accent-green: #10B981;
+            --accent-red: #EF4444;
+            --accent-cyan: #06B6D4;
+            --text-primary: #1F2937;
+            --text-secondary: #6B7280;
+            --text-light: #E5E7EB;
+            --border-light: #E5E7EB;
+            --border-dark: #374151;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-cream);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ===== UTILITIES ===== */
         .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .py-10 {
+            padding-top: 1.5rem;
+            padding-bottom: 1.5rem;
+        }
+
+        .mt-10 {
+            margin-top: 2.5rem;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        /* ===== MOTION ===== */
+        .reveal {
+            opacity: 0;
+            transform: translate3d(0, 18px, 0);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+            will-change: opacity, transform;
+        }
+
+        .reveal-left {
+            transform: translate3d(-24px, 0, 0);
+        }
+
+        .reveal-right {
+            transform: translate3d(24px, 0, 0);
+        }
+
+        .reveal-down {
+            transform: translate3d(0, -18px, 0);
+        }
+
+        .reveal.is-visible {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }
+
+        .reveal-delay-1 { transition-delay: 0.08s; }
+        .reveal-delay-2 { transition-delay: 0.16s; }
+        .reveal-delay-3 { transition-delay: 0.24s; }
+        .reveal-delay-4 { transition-delay: 0.32s; }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            .reveal {
+                opacity: 1;
+                transform: none;
+                transition: none;
+            }
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: var(--accent-green);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-family: 'Inter', sans-serif;
+            gap: 8px;
+        }
+
+        .btn-dark {
+            background: var(--bg-dark);
+            color: var(--text-light);
+        }
+
+        .btn-dark:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(11, 12, 14, 0.3);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--bg-dark);
+            border: 1px solid var(--bg-dark);
+        }
+
+        .btn-outline:hover {
+            background: var(--bg-dark);
+            color: var(--text-light);
+        }
+
+        /* ===== NAVIGATION ===== */
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border-light);
+            margin: 48px auto 88px;
+        }
+
+        .nav-logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--bg-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-logo-icon {
+            width: 20px;
+            height: 20px;
+            background: var(--bg-dark);
+            border-radius: 2px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--bg-dark);
+        }
+
+        .nav-right {
+            display: flex;
+            gap: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+        }
+
+        /* ===== HERO SECTION ===== */
+        .hero {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+            margin-bottom: 120px;
+        }
+
+        .hero-content h1 {
+            font-size: 3.5rem;
+            line-height: 1.2;
+            margin: 16px 0 24px 0;
+            color: #000000;
+        }
+
+        .hero-content h1 .italic {
+            font-style: italic;
+            color: #000000;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            line-height: 1.7;
+        }
+
+        .hero-ctas {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 48px;
+        }
+
+        .hero-meta {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            padding-top: 32px;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .hero-meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .hero-meta-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-secondary);
+        }
+
+        .hero-meta-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--bg-dark);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Journal Widget */
+        .journal-widget {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 18px;
+            padding: 38px 32px 28px;
+            color: var(--text-light);
+            position: relative;
+            overflow: visible;
+            box-shadow: 0 24px 60px rgba(11, 12, 14, 0.28);
+        }
+
+        .journal-chip {
+            position: absolute;
+            top: -18px;
+            left: 18px;
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            background: var(--bg-cream);
+            color: var(--bg-dark);
+            border: 1px solid rgba(11, 12, 14, 0.08);
+            border-radius: 6px;
+            font-size: 0.78rem;
+            letter-spacing: 1.8px;
+            text-transform: uppercase;
+            font-family: 'JetBrains Mono', monospace;
+            z-index: 1;
+        }
+
+        .journal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            margin-bottom: 18px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border-dark);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .journal-title {
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #64748B;
+        }
+
+        .journal-id {
+            font-size: 0.82rem;
+            color: var(--accent-cyan);
+            letter-spacing: 0.6px;
+        }
+
+        .journal-entries {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .journal-entry {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            column-gap: 24px;
+            justify-content: space-between;
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .journal-entry:last-child {
+            border-bottom: none;
+        }
+
+        .journal-entry-main {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .journal-account {
+            color: #F3F4F6;
+            font-size: 1rem;
+            line-height: 1.35;
+        }
+
+        .journal-sub {
+            color: rgba(229, 231, 235, 0.42);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+        }
+
+        .journal-amount {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            white-space: nowrap;
+            padding-top: 2px;
+            color: #E2E8F0;
+        }
+
+        .journal-footer {
+            margin-top: 22px;
+            padding-top: 18px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .journal-meta-item {
+            font-size: 0.82rem;
+            color: rgba(229, 231, 235, 0.88);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .journal-meta-label {
+            color: rgba(229, 231, 235, 0.5);
+        }
+
+        @media (max-width: 1024px) {
+            .hero {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-meta {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ===== THREE PRIMITIVES ===== */
+        .primitives {
+            margin-bottom: 120px;
+        }
+
+        .primitives-header {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            margin-bottom: 60px;
+            align-items: start;
+        }
+
+        .primitives-header h2 {
+            font-size: 2.5rem;
+            line-height: 1.3;
+            color: var(--bg-dark);
+        }
+
+        .primitives-header p {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .primitives-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+
+        .primitive-card {
             background: white;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 32px;
+        }
+
+        .primitive-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            color: var(--bg-dark);
+        }
+
+        .primitive-card p {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+            line-height: 1.7;
+        }
+
+        .primitive-visual {
+            background: var(--bg-cream);
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            padding: 16px;
+            font-size: 0.85rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .vault-state {
+            background: var(--bg-dark);
+            color: var(--text-light);
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .vault-label {
+            font-size: 0.8rem;
+        }
+
+        .vault-status {
+            display: inline-block;
+            padding: 4px 8px;
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .ledger-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .ledger-row.balance {
+            background: rgba(16, 185, 129, 0.1);
+            padding: 8px;
+            border-radius: 3px;
+            border: none;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .netting-transfer {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: rgba(0,0,0,0.02);
+            border-radius: 3px;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+        }
+
+        .netting-arrow {
+            color: var(--text-secondary);
+        }
+
+        .netting-amount {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        @media (max-width: 1024px) {
+            .primitives-header {
+                grid-template-columns: 1fr;
+            }
+
+            .primitives-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ===== LIFECYCLE SECTION ===== */
+        .lifecycle {
+            background: var(--bg-dark);
+            color: var(--text-light);
+            padding: 104px 0 96px;
+            margin-bottom: 120px;
+            position: relative;
+        }
+
+        .lifecycle::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+        }
+
+        .lifecycle-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            color: rgba(229, 231, 235, 0.45);
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 18px;
+        }
+
+        .lifecycle-kicker::before {
+            content: '';
+            width: 18px;
+            height: 1px;
+            background: rgba(229, 231, 235, 0.35);
+        }
+
+        .lifecycle-header {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 72px;
+            margin-bottom: 56px;
+            align-items: start;
+        }
+
+        .lifecycle-header h2 {
+            font-size: clamp(3rem, 4.8vw, 5.2rem);
+            line-height: 0.95;
+            letter-spacing: -0.04em;
+            max-width: 28ch;
+        }
+
+        .lifecycle-title-muted {
+            color: rgba(229, 231, 235, 0.55);
+            display: block;
+        }
+
+        .lifecycle-header p {
+            color: rgba(229, 231, 235, 0.68);
+            font-size: 1rem;
+            line-height: 1.75;
+            max-width: 38ch;
+            margin-top: 10px;
+        }
+
+        .lifecycle-frame {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            border: 1px solid rgba(255,255,255,0.12);
             border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            max-width: 700px;
-            width: 100%;
+            overflow: hidden;
+            background: rgba(255,255,255,0.01);
+        }
+
+        .lifecycle-step {
+            padding: 34px 26px 30px;
+            background: transparent;
+            border: 0;
+            border-right: 1px solid rgba(255,255,255,0.08);
+            position: relative;
+            min-height: 100%;
+        }
+
+        .lifecycle-step:last-child {
+            border-right: none;
+        }
+
+        .lifecycle-step-number {
+            font-size: 0.78rem;
+            color: rgba(229, 231, 235, 0.34);
+            font-weight: 600;
+            letter-spacing: 1.2px;
+            margin-bottom: 22px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .lifecycle-step-title {
+            font-size: 1.45rem;
+            font-weight: 600;
+            margin-bottom: 14px;
+            color: #F3F4F6;
+        }
+
+        .lifecycle-step-desc {
+            font-size: 0.95rem;
+            color: rgba(229, 231, 235, 0.55);
+            line-height: 1.55;
+            margin-bottom: 30px;
+            max-width: 24ch;
+        }
+
+        .lifecycle-step-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0;
+            background: transparent;
+            border-radius: 0;
+            font-size: 0.72rem;
+            letter-spacing: 1.6px;
+            color: rgba(229, 231, 235, 0.38);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .lifecycle-step-status::before {
+            content: '●';
+            font-size: 0.8rem;
+            line-height: 1;
+        }
+
+        .lifecycle-step.status-blue .lifecycle-step-status::before {
+            color: #38BDF8;
+        }
+
+        .lifecycle-step.status-green .lifecycle-step-status::before {
+            color: #22C55E;
+        }
+
+        .lifecycle-step.status-red .lifecycle-step-status::before {
+            color: #EF4444;
+        }
+
+        .lifecycle-step.status-gray .lifecycle-step-status::before {
+            color: rgba(229, 231, 235, 0.55);
+        }
+
+        .lifecycle-steps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .lifecycle-step:not(:last-child) {
+            box-shadow: inset -1px 0 0 rgba(255,255,255,0.08);
+        }
+
+        @media (max-width: 1024px) {
+            .lifecycle-header {
+                grid-template-columns: 1fr;
+            }
+
+            .lifecycle-header h2 {
+                max-width: none;
+            }
+
+            .lifecycle-header p {
+                max-width: none;
+                margin-top: 0;
+            }
+
+            .lifecycle-steps {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .lifecycle-step {
+                border-right: 1px solid rgba(255,255,255,0.08);
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+            }
+
+            .lifecycle-step:nth-child(2n) {
+                border-right: none;
+            }
+
+            .lifecycle-step:nth-last-child(-n+2) {
+                border-bottom: none;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .lifecycle {
+                padding: 84px 0 76px;
+            }
+
+            .lifecycle-header h2 {
+                font-size: 2.6rem;
+                line-height: 1.02;
+            }
+
+            .lifecycle-steps {
+                grid-template-columns: 1fr;
+            }
+
+            .lifecycle-step {
+                border-right: none;
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+                padding: 28px 22px;
+            }
+
+            .lifecycle-step:last-child {
+                border-bottom: none;
+            }
+        }
+
+        /* ===== QUERY INTERFACE ===== */
+        .query-section {
+            margin-bottom: 120px;
+        }
+
+        .query-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .query-header h2 {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            color: var(--bg-dark);
+        }
+
+        .query-header p {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .query-container {
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
             padding: 40px;
         }
 
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-            text-align: center;
+        .query-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
         }
 
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
-
-        .stats {
+        .query-extras {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: #f5f5f5;
-            border-radius: 8px;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 24px;
+            margin-top: 28px;
         }
 
-        .stat-item {
+        .history-panel {
+            background: var(--bg-cream);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .history-header h3 {
+            font-size: 0.95rem;
+            color: var(--bg-dark);
+        }
+
+        .history-clear {
+            background: transparent;
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.7rem;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .history-clear:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .history-item > div {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .history-item:hover {
+            border-color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.05);
+        }
+
+        .history-query {
+            font-weight: 600;
+            color: var(--bg-dark);
+            font-size: 0.9rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .history-meta {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .history-subtitle {
+            margin: 16px 0 8px;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-secondary);
+        }
+
+        .history-empty {
+            padding: 10px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-align: center;
+            border: 1px dashed var(--border-light);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .history-pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-light);
+            flex-wrap: wrap;
+        }
+
+        .pagination-btn {
+            min-width: 36px;
+            height: 36px;
+            padding: 0 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-light);
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+
+        .pagination-btn:hover:not(.disabled) {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.05);
+        }
+
+        .pagination-btn.active {
+            background: var(--accent-cyan);
+            color: white;
+            border-color: var(--accent-cyan);
+        }
+
+        .pagination-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .history-note {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .history-hint {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 12px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--bg-cream);
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            padding: 20px;
             text-align: center;
         }
 
         .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #667eea;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--bg-dark);
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 8px;
         }
 
         .stat-label {
-            font-size: 12px;
-            color: #666;
+            font-size: 0.8rem;
             text-transform: uppercase;
-            margin-top: 5px;
+            letter-spacing: 0.8px;
+            color: var(--text-secondary);
         }
 
-        .input-group {
-            margin-bottom: 20px;
+        .query-input-group {
+            margin-bottom: 32px;
         }
 
-        label {
+        .query-input-label {
             display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
         }
 
-        input[type="text"] {
+        .query-input {
             width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
+            padding: 16px;
+            border: 1px solid var(--border-light);
             border-radius: 6px;
-            font-size: 16px;
-            transition: border-color 0.3s;
+            font-size: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            transition: all 0.3s ease;
         }
 
-        input[type="text"]:focus {
+        .query-input:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: white;
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
         }
 
-        .predictions {
+        .predictions-container {
             display: none;
-            margin-top: 25px;
-            padding-top: 25px;
-            border-top: 2px solid #f0f0f0;
+            margin-top: 32px;
+            padding-top: 32px;
+            border-top: 1px solid var(--border-light);
         }
 
-        .predictions.show {
+        .predictions-container.show {
             display: block;
+            animation: slideIn 0.3s ease;
         }
 
-        .prediction-title {
-            color: #333;
-            font-weight: 600;
-            margin-bottom: 15px;
-            font-size: 14px;
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .predictions-title {
+            font-size: 0.85rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
         }
 
-        .prediction-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 15px;
-            margin-bottom: 8px;
-            background: #f9f9f9;
+        .predictions-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+        }
+
+        .prediction-badge {
+            background: var(--bg-cream);
+            border: 1px solid var(--border-light);
             border-radius: 6px;
-            border-left: 4px solid #667eea;
-            transition: all 0.2s;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .prediction-item:hover {
-            background: #f0f0f0;
-            transform: translateX(5px);
+        .prediction-badge:hover {
+            border-color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.05);
         }
 
         .prediction-word {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
             font-weight: 600;
-            color: #333;
+            color: black;
+            margin-bottom: 6px;
         }
 
         .prediction-prob {
-            background: #667eea;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
+            font-size: 0.8rem;
+            color: var(--accent-green);
+            font-family: 'JetBrains Mono', monospace;
         }
 
-        .error {
-            color: #e74c3c;
-            padding: 12px;
-            background: #fadbd8;
-            border-radius: 6px;
-            margin-top: 15px;
+        .error-message {
             display: none;
+            padding: 12px 16px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 6px;
+            color: var(--accent-red);
+            font-size: 0.9rem;
+            margin-top: 16px;
         }
 
-        .error.show {
+        .error-message.show {
             display: block;
         }
 
-        .info {
-            background: #e8f4f8;
-            border-left: 4px solid #3498db;
-            padding: 12px 15px;
-            border-radius: 4px;
-            font-size: 13px;
-            color: #2c3e50;
-            margin-top: 15px;
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .predictions-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .query-extras {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            background: var(--bg-dark);
+            color: var(--text-light);
+            padding: 60px 0;
+            border-top: 1px solid var(--border-dark);
+            margin-top: 120px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 60px;
+        }
+
+        .footer-section h3 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 12px;
+        }
+
+        .footer-section a {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--text-secondary);
+        }
+
+        .footer-meta {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-align: right;
+        }
+
+        @media (max-width: 768px) {
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-meta {
+                text-align: left;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🔍 Query Prediction System</h1>
-        <p class="subtitle">Language Model-based Next Word Predictor</p>
+    <!-- Navigation -->
+    <nav class="container py-10 reveal reveal-down">
+        <div class="nav-logo">
+            <div class="nav-logo-icon"></div>
+            Query Engine
+        </div>
+        <ul class="nav-links">
+            <li><a href="#primitives">How It Works</a></li>
+            <li><a href="#lifecycle">Lifecycle</a></li>
+            <li><a href="#interface">Interface</a></li>
+            <li><a href="#analytics">Analytics</a></li>
+            <li><a href="/stats">Statistics</a></li>
+        </ul>
+        <div class="nav-right">
+            <a href="https://github.com/theodhorex/NLP_Query_Prediction_Engine" target="_blank" class="btn btn-outline">GitHub ↗</a>
+            <a href="#interface" class="btn btn-dark">Start Predicting →</a>
+        </div>
+    </nav>
 
-        <div class="stats">
-            <div class="stat-item">
-                <div class="stat-value" id="unigrams">0</div>
-                <div class="stat-label">Unigrams</div>
+    <!-- Hero Section -->
+    <section class="container mt-10">
+        <div class="hero">
+            <div class="hero-content reveal reveal-left">
+                <h1>The prediction layer <span class="italic">for natural language.</span></h1>
+                <p class="hero-subtitle">Trustless n-gram models, verifiable language statistics, and real-time predictions powered by local corpus analysis.</p>
+                <div class="hero-ctas">
+                    <a href="#interface" class="btn btn-dark">Open Interface →</a>
+                </div>
+                <div class="hero-meta">
+                    <div class="hero-meta-item">
+                        <span class="hero-meta-label">Prediction Asset</span>
+                        <span class="hero-meta-value">N-gram Model</span>
+                    </div>
+                    <div class="hero-meta-item">
+                        <span class="hero-meta-label">Built With</span>
+                        <span class="hero-meta-value">NLTK · Python</span>
+                    </div>
+                    <div class="hero-meta-item">
+                        <span class="hero-meta-label">Audit Trail</span>
+                        <span class="hero-meta-value">Corpus-backed</span>
+                    </div>
+                </div>
             </div>
-            <div class="stat-item">
-                <div class="stat-value" id="bigrams">0</div>
-                <div class="stat-label">Bigrams</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="trigrams">0</div>
-                <div class="stat-label">Trigrams</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-value" id="vocab">0</div>
-                <div class="stat-label">Vocabulary</div>
+
+            <div class="journal-widget reveal reveal-right">
+                <div class="journal-chip">MODEL SNAPSHOT</div>
+                <div class="journal-header">
+                    <span class="journal-title">Query Engine V.1.0</span>
+                    <span class="journal-id">Corpus</span>
+                </div>
+                <div class="journal-entries">
+                    <div class="journal-entry">
+                        <div class="journal-entry-main">
+                            <span class="journal-account">Unigram Count</span>
+                            <span class="journal-sub">Source · corpus index</span>
+                        </div>
+                        <span class="journal-amount">148,210</span>
+                    </div>
+                    <div class="journal-entry">
+                        <div class="journal-entry-main">
+                            <span class="journal-account">Bigram Count</span>
+                            <span class="journal-sub">Index · bigram table</span>
+                        </div>
+                        <span class="journal-amount">512,884</span>
+                    </div>
+                    <div class="journal-entry">
+                        <div class="journal-entry-main">
+                            <span class="journal-account">Trigram Count</span>
+                            <span class="journal-sub">Index · trigram table</span>
+                        </div>
+                        <span class="journal-amount">1,024,332</span>
+                    </div>
+                    <div class="journal-entry">
+                        <div class="journal-entry-main">
+                            <span class="journal-account">Vocabulary Size</span>
+                            <span class="journal-sub">Unique tokens</span>
+                        </div>
+                        <span class="journal-amount">12,980</span>
+                    </div>
+                </div>
+                <div class="journal-footer">
+                    <span class="journal-meta-item"><span class="journal-meta-label">Coverage ·</span>30 documents</span>
+                    <span class="journal-meta-item"><span class="journal-meta-label">Model ·</span>N-gram (n=1–3)</span>
+                </div>
             </div>
         </div>
+    </section>
 
-        <div class="input-group">
-            <label for="query">Enter Query (1-2 words)</label>
-            <input
-                type="text"
-                id="query"
-                placeholder="e.g., 'machine learning' or 'artificial'"
-                autocomplete="off"
-            >
+    <!-- Three Primitives -->
+    <section class="primitives container" id="primitives">
+        <div class="primitives-header reveal">
+            <h2>Three pillars.<br>One prediction engine.</h2>
+            <p>The pipeline is simple: clean corpus, build n-gram tables, score with frequencies, and serve top-k suggestions in real time. Every result is traceable to corpus counts.</p>
         </div>
 
-        <div class="error" id="error"></div>
+        <div class="primitives-grid">
+            <!-- Trustless Corpus -->
+            <div class="primitive-card reveal reveal-delay-1">
+                <h3>Corpus Indexing</h3>
+                <p>Documents are cleaned, tokenized, and indexed into unigram, bigram, and trigram tables. The same corpus always produces the same counts.</p>
+                <div class="primitive-visual">
+                    <div class="vault-state">
+                        <span class="vault-label">FILE · Algorithm.txt</span>
+                        <span class="vault-status">INDEXED</span>
+                    </div>
+                    <div class="vault-state">
+                        <span class="vault-label">FILE · Data_science.txt</span>
+                        <span class="vault-status">INDEXED</span>
+                    </div>
+                    <div class="vault-state">
+                        <span class="vault-label">FILE · Natural_language_processing.txt</span>
+                        <span class="vault-status">INDEXED</span>
+                    </div>
+                    <div style="text-align: center; padding: 8px; color: #9CA3AF; font-size: 0.75rem; margin-top: 8px;">30 documents indexed</div>
+                </div>
+            </div>
 
-        <div class="predictions" id="predictions">
-            <div class="prediction-title">Top Predictions</div>
-            <div id="predictionsList"></div>
+            <!-- Double-entry Statistics -->
+            <div class="primitive-card reveal reveal-delay-2">
+                <h3>Probability Scoring</h3>
+                <p>Each candidate is scored with conditional probability: P(next | context) = count(context, next) / count(context). This drives the ranking.</p>
+                <div class="primitive-visual">
+                    <div class="ledger-row">
+                        <span>context</span>
+                        <span style="color: #10B981;">"machine"</span>
+                    </div>
+                    <div class="ledger-row">
+                        <span>count(context)</span>
+                        <span style="color: #10B981;">500</span>
+                    </div>
+                    <div class="ledger-row">
+                        <span>count(context, next)</span>
+                        <span style="color: #10B981;">142</span>
+                    </div>
+                    <div class="ledger-row balance">
+                        <span>P(next | context)</span>
+                        <span style="color: #10B981;">0.284</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Micro-prediction Batching -->
+            <div class="primitive-card reveal reveal-delay-3">
+                <h3>Top-k Suggestions</h3>
+                <p>Top candidates are returned with probabilities. Clicking a suggestion appends it to the query for fast iteration.</p>
+                <div class="primitive-visual">
+                    <div style="margin-bottom: 12px; font-size: 0.75rem; color: #9CA3AF; text-transform: uppercase;">Input Context</div>
+                    <div class="netting-transfer">
+                        <span>context</span>
+                        <span class="netting-arrow">→</span>
+                        <span class="netting-amount">"machine"</span>
+                    </div>
+                    <div class="netting-transfer">
+                        <span>candidate</span>
+                        <span class="netting-arrow">→</span>
+                        <span class="netting-amount">"learning"</span>
+                    </div>
+                    <div class="netting-transfer">
+                        <span>candidate</span>
+                        <span class="netting-arrow">→</span>
+                        <span class="netting-amount">"vision"</span>
+                    </div>
+                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.1); font-size: 0.75rem; color: #9CA3AF; text-transform: uppercase;">Top Results</div>
+                    <div style="margin-top: 8px; color: #10B981; font-size: 0.85rem;">● Top 5 suggestions returned</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Lifecycle Section -->
+    <section class="lifecycle" id="lifecycle">
+        <div class="container">
+            <div class="lifecycle-kicker reveal reveal-down">§ 02 Lifecycle</div>
+            <div class="lifecycle-header reveal">
+                <h2>From query to prediction.<br><span class="lifecycle-title-muted">Corpus-anchored results.</span></h2>
+                <p>Every request moves through four steps. Text is normalized, n-grams are retrieved, and probabilities are scored. Each suggestion is traceable to corpus counts.</p>
+            </div>
+
+            <div class="lifecycle-steps lifecycle-frame">
+                <div class="lifecycle-step status-gray reveal reveal-delay-1">
+                    <div class="lifecycle-step-number">01</div>
+                    <div class="lifecycle-step-title">Capture</div>
+                    <div class="lifecycle-step-desc">User enters one or two words. The request is timestamped and queued for lookup.</div>
+                    <span class="lifecycle-step-status">STATE · CAPTURED</span>
+                </div>
+
+                <div class="lifecycle-step status-blue reveal reveal-delay-2">
+                    <div class="lifecycle-step-number">02</div>
+                    <div class="lifecycle-step-title">Normalize</div>
+                    <div class="lifecycle-step-desc">Input is lowercased, tokenized, and trimmed to the latest context window.</div>
+                    <span class="lifecycle-step-status">STATE · NORMALIZED</span>
+                </div>
+
+                <div class="lifecycle-step status-green reveal reveal-delay-3">
+                    <div class="lifecycle-step-number">03</div>
+                    <div class="lifecycle-step-title">Retrieve</div>
+                    <div class="lifecycle-step-desc">N-gram index is searched. Candidate next words and frequencies are gathered.</div>
+                    <span class="lifecycle-step-status">STATE · RETRIEVED</span>
+                </div>
+
+                <div class="lifecycle-step status-red reveal reveal-delay-4">
+                    <div class="lifecycle-step-number">04</div>
+                    <div class="lifecycle-step-title">Deliver</div>
+                    <div class="lifecycle-step-desc">Probabilities are computed and top suggestions are returned to the interface.</div>
+                    <span class="lifecycle-step-status">STATE · DELIVERED</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Query Interface -->
+    <section class="query-section container" id="interface">
+        <div class="query-header reveal">
+            <h2>Live Prediction Interface</h2>
+            <p>Start typing to see next-word predictions powered by n-gram language models.</p>
         </div>
 
-        <div class="info">
-            💡 Tips: Enter 1 or 2 words to see predicted next words based on the language model.
+        <div class="query-container reveal reveal-delay-1">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="unigrams">0</div>
+                    <div class="stat-label">Unigrams</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="bigrams">0</div>
+                    <div class="stat-label">Bigrams</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="trigrams">0</div>
+                    <div class="stat-label">Trigrams</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="vocab">0</div>
+                    <div class="stat-label">Vocabulary</div>
+                </div>
+            </div>
+
+            <div class="query-input-group">
+                <label class="query-input-label">Enter Query</label>
+                <input
+                    type="text"
+                    id="query"
+                    class="query-input"
+                    placeholder="e.g., machine learning or artificial"
+                    autocomplete="off"
+                >
+            </div>
+
+            <div class="error-message" id="error"></div>
+
+            <div class="predictions-container" id="predictions">
+                <div class="predictions-title">Top Predictions</div>
+                <div class="predictions-grid" id="predictionsList"></div>
+            </div>
+
+            <div class="query-extras">
+                <div class="history-panel">
+                    <div class="history-header">
+                        <h3>Recent Searches</h3>
+                        <button class="history-clear" id="clearHistory" type="button">Clear</button>
+                    </div>
+                    <div class="history-list" id="recentHistory"></div>
+                    <div class="history-pagination" id="recentPagination"></div>
+
+                    <div class="history-subtitle">Most Frequent</div>
+                    <div class="history-list" id="topHistory"></div>
+                    <div class="history-pagination" id="topPagination"></div>
+                </div>
+
+                <div class="history-panel">
+                    <div class="history-header">
+                        <h3>Export CSV</h3>
+                    </div>
+                    <p class="history-note">Download prediction data for analysis and reporting.</p>
+                    <div class="query-actions">
+                        <button class="btn btn-dark" id="downloadLatest" type="button">Download Latest CSV</button>
+                        <button class="btn btn-outline" id="downloadHistory" type="button">Download History CSV</button>
+                    </div>
+                    <p class="history-hint">Columns: query, rank, word, probability, count, timestamp.</p>
+                </div>
+            </div>
         </div>
-    </div>
+    </section>
+
+    <!-- Analytics -->
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section reveal reveal-delay-1">
+                    <h3>Section</h3>
+                    <ul>
+                        <li><a href="#interface">Interface</a></li>
+                        <li><a href="#lifecycle">Lifecycle</a></li>
+                        <li><a href="#primitives">How It Works</a></li>
+                        <li><a href="/stats">Statistics</a></li>
+                        <li><a href="https://github.com/theodhorex/NLP_Query_Prediction_Engine" target="_blank" rel="noopener">GitHub</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section reveal reveal-delay-2">
+                    <h3>About</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6;">Query Prediction Engine · Natural Language Processing · Universitas Kristen Duta Wacana, Yogyakarta</p>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; margin-top: 12px;">Built with Python, NLTK, and a curated technical corpus.</p>
+                </div>
+                <div class="footer-section reveal reveal-delay-3">
+                    <div class="footer-meta">
+                        <p>© 2026 • By Theo & Deo</p>
+                        <p style="margin-top: 12px; font-size: 0.8rem;">v1.0 · May 2026</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
 
     <script>
         const queryInput = document.getElementById('query');
         const predictionsDiv = document.getElementById('predictions');
         const predictionsList = document.getElementById('predictionsList');
         const errorDiv = document.getElementById('error');
+        const recentHistory = document.getElementById('recentHistory');
+        const topHistory = document.getElementById('topHistory');
+        const recentPagination = document.getElementById('recentPagination');
+        const topPagination = document.getElementById('topPagination');
+        const clearHistoryBtn = document.getElementById('clearHistory');
+        const downloadLatestBtn = document.getElementById('downloadLatest');
+        const downloadHistoryBtn = document.getElementById('downloadHistory');
 
+        const HISTORY_KEY = 'queryHistory';
+        const HISTORY_LIMIT = 50;
+        let lastPrediction = null;
+
+        // Load stats on page load
         fetch('/api/stats')
             .then(res => res.json())
             .then(data => {
@@ -230,10 +1513,10 @@
                 document.getElementById('bigrams').textContent = data.bigrams_count.toLocaleString();
                 document.getElementById('trigrams').textContent = data.trigrams_count.toLocaleString();
                 document.getElementById('vocab').textContent = data.vocabulary_size.toLocaleString();
-            });
+            })
+            .catch(err => console.error('Failed to load stats:', err));
 
-        queryInput.addEventListener('keyup', debounce(predictQuery, 300));
-
+        // Debounce function
         function debounce(func, delay) {
             let timeout;
             return function(...args) {
@@ -242,6 +1525,7 @@
             };
         }
 
+        // Predict function
         function predictQuery() {
             const query = queryInput.value.trim();
             errorDiv.classList.remove('show');
@@ -253,7 +1537,7 @@
 
             const words = query.split(/\s+/).filter(w => w.length > 0);
             if (words.length > 2) {
-                errorDiv.textContent = 'Please enter maximum 2 words';
+                errorDiv.textContent = '⚠ Maximum 2 words allowed';
                 errorDiv.classList.add('show');
                 predictionsDiv.classList.remove('show');
                 return;
@@ -267,7 +1551,7 @@
             .then(res => res.json())
             .then(data => {
                 if (data.error) {
-                    errorDiv.textContent = data.error;
+                    errorDiv.textContent = `✗ ${data.error}`;
                     errorDiv.classList.add('show');
                     predictionsDiv.classList.remove('show');
                     return;
@@ -275,24 +1559,355 @@
 
                 predictionsList.innerHTML = '';
                 if (data.predictions.length === 0) {
-                    predictionsList.innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">No predictions found</p>';
+                    predictionsList.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #9CA3AF; padding: 20px;">∅ No predictions</div>';
                 } else {
                     data.predictions.forEach(pred => {
-                        const item = document.createElement('div');
-                        item.className = 'prediction-item';
-                        item.innerHTML = `
-                            <span class="prediction-word">${pred.word}</span>
+                        const badge = document.createElement('div');
+                        badge.className = 'prediction-badge';
+                        badge.innerHTML = `
+                            <span class="prediction-word">${escapeHtml(pred.word)}</span>
                             <span class="prediction-prob">${(pred.probability * 100).toFixed(1)}%</span>
                         `;
-                        predictionsList.appendChild(item);
+                        badge.addEventListener('click', () => {
+                            queryInput.value = query + ' ' + pred.word;
+                            predictQuery();
+                        });
+                        predictionsList.appendChild(badge);
                     });
                 }
+
+                const timestamp = data.timestamp || new Date().toISOString();
+                lastPrediction = {
+                    query: data.query || query,
+                    predictions: data.predictions || [],
+                    timestamp
+                };
+                recordHistory(lastPrediction);
+                renderHistory();
+
                 predictionsDiv.classList.add('show');
             })
             .catch(err => {
-                errorDiv.textContent = 'Error: ' + err.message;
+                errorDiv.textContent = `✗ Error: ${err.message}`;
                 errorDiv.classList.add('show');
             });
+        }
+
+        function loadHistory() {
+            try {
+                const stored = localStorage.getItem(HISTORY_KEY);
+                return stored ? JSON.parse(stored) : [];
+            } catch (err) {
+                console.warn('Failed to parse history:', err);
+                return [];
+            }
+        }
+
+        function saveHistory(history) {
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+        }
+
+        function recordHistory(entry) {
+            if (!entry || !entry.query) {
+                return;
+            }
+
+            const history = loadHistory();
+            history.unshift({
+                query: entry.query,
+                predictions: entry.predictions || [],
+                timestamp: entry.timestamp,
+                ts: Date.parse(entry.timestamp) || Date.now()
+            });
+
+            const trimmed = history.slice(0, HISTORY_LIMIT);
+            saveHistory(trimmed);
+        }
+
+        function formatTimeAgo(ts) {
+            if (!ts) {
+                return 'just now';
+            }
+            const diffMs = Date.now() - ts;
+            const minutes = Math.floor(diffMs / 60000);
+            if (minutes < 1) {
+                return 'just now';
+            }
+            if (minutes < 60) {
+                return `${minutes}m ago`;
+            }
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) {
+                return `${hours}h ago`;
+            }
+            const days = Math.floor(hours / 24);
+            return `${days}d ago`;
+        }
+
+        function setHistoryEmpty(container, label) {
+            container.innerHTML = `<div class="history-empty">${label}</div>`;
+        }
+
+        function renderHistory() {
+            if (!recentHistory || !topHistory || !recentPagination || !topPagination) {
+                console.warn('History elements not found:', { recentHistory, topHistory, recentPagination, topPagination });
+                return;
+            }
+
+            const history = loadHistory();
+            const ITEMS_PER_PAGE = 5;
+
+            recentHistory.innerHTML = '';
+            topHistory.innerHTML = '';
+            recentPagination.innerHTML = '';
+            topPagination.innerHTML = '';
+
+            if (history.length === 0) {
+                setHistoryEmpty(recentHistory, 'No searches yet');
+                setHistoryEmpty(topHistory, 'No frequent queries');
+                return;
+            }
+
+            // ===== RECENT SEARCHES PAGINATION =====
+            const totalRecentPages = Math.ceil(history.length / ITEMS_PER_PAGE);
+            let currentRecentPage = 1;
+
+            function renderRecentPage(page) {
+                recentHistory.innerHTML = '';
+                const start = (page - 1) * ITEMS_PER_PAGE;
+                const end = start + ITEMS_PER_PAGE;
+                const pageItems = history.slice(start, end);
+
+                pageItems.forEach(entry => {
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    item.innerHTML = `
+                        <div>
+                            <div class="history-query">${escapeHtml(entry.query)}</div>
+                            <div class="history-meta">${formatTimeAgo(entry.ts)} · ${entry.predictions.length} results</div>
+                        </div>
+                    `;
+                    item.addEventListener('click', () => {
+                        queryInput.value = entry.query;
+                        predictQuery();
+                    });
+                    recentHistory.appendChild(item);
+                });
+            }
+
+            // Render recent pagination buttons
+            if (totalRecentPages > 1) {
+                for (let i = 1; i <= totalRecentPages; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = `pagination-btn ${i === 1 ? 'active' : ''}`;
+                    btn.textContent = i;
+                    btn.type = 'button';
+                    btn.addEventListener('click', () => {
+                        currentRecentPage = i;
+                        renderRecentPage(i);
+                        // Update active button
+                        Array.from(recentPagination.querySelectorAll('.pagination-btn')).forEach((b, idx) => {
+                            b.classList.toggle('active', idx + 1 === i);
+                        });
+                    });
+                    recentPagination.appendChild(btn);
+                }
+            }
+
+            renderRecentPage(1);
+
+            // ===== MOST FREQUENT PAGINATION =====
+            const frequencyMap = new Map();
+            history.forEach(entry => {
+                const current = frequencyMap.get(entry.query) || { count: 0, lastTs: 0 };
+                current.count += 1;
+                current.lastTs = Math.max(current.lastTs, entry.ts || 0);
+                frequencyMap.set(entry.query, current);
+            });
+
+            const allTopItems = Array.from(frequencyMap.entries())
+                .sort((a, b) => b[1].count - a[1].count);
+
+            const totalTopPages = Math.ceil(allTopItems.length / ITEMS_PER_PAGE);
+            let currentTopPage = 1;
+
+            function renderTopPage(page) {
+                topHistory.innerHTML = '';
+                const start = (page - 1) * ITEMS_PER_PAGE;
+                const end = start + ITEMS_PER_PAGE;
+                const pageItems = allTopItems.slice(start, end);
+
+                if (pageItems.length === 0) {
+                    setHistoryEmpty(topHistory, 'No frequent queries');
+                } else {
+                    pageItems.forEach(([query, meta]) => {
+                        const item = document.createElement('div');
+                        item.className = 'history-item';
+                        item.innerHTML = `
+                            <div>
+                                <div class="history-query">${escapeHtml(query)}</div>
+                                <div class="history-meta">${meta.count}x · ${formatTimeAgo(meta.lastTs)}</div>
+                            </div>
+                        `;
+                        item.addEventListener('click', () => {
+                            queryInput.value = query;
+                            predictQuery();
+                        });
+                        topHistory.appendChild(item);
+                    });
+                }
+            }
+
+            // Render top pagination buttons
+            if (allTopItems.length > 0) {
+                if (totalTopPages > 1) {
+                    for (let i = 1; i <= totalTopPages; i++) {
+                        const btn = document.createElement('button');
+                        btn.className = `pagination-btn ${i === 1 ? 'active' : ''}`;
+                        btn.textContent = i;
+                        btn.type = 'button';
+                        btn.addEventListener('click', () => {
+                            currentTopPage = i;
+                            renderTopPage(i);
+                            // Update active button
+                            Array.from(topPagination.querySelectorAll('.pagination-btn')).forEach((b, idx) => {
+                                b.classList.toggle('active', idx + 1 === i);
+                            });
+                        });
+                        topPagination.appendChild(btn);
+                    }
+                }
+                renderTopPage(1);
+            } else {
+                setHistoryEmpty(topHistory, 'No frequent queries');
+            }
+        }
+
+        function csvEscape(value) {
+            if (value === null || value === undefined) {
+                return '';
+            }
+            const text = String(value);
+            if (/[",\n]/.test(text)) {
+                return `"${text.replace(/"/g, '""')}"`;
+            }
+            return text;
+        }
+
+        function buildCsv(rows) {
+            const headers = ['query', 'rank', 'word', 'probability', 'count', 'timestamp'];
+            const lines = [headers.join(',')];
+            rows.forEach(row => {
+                const line = headers.map(key => csvEscape(row[key])).join(',');
+                lines.push(line);
+            });
+            return lines.join('\n');
+        }
+
+        function downloadCsv(csvData, filename) {
+            const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportCsv(type) {
+            const history = loadHistory();
+            let entries = [];
+
+            if (type === 'latest') {
+                if (lastPrediction) {
+                    entries = [lastPrediction];
+                } else if (history.length > 0) {
+                    entries = [history[0]];
+                }
+            } else {
+                entries = history;
+            }
+
+            if (!entries.length) {
+                errorDiv.textContent = '⚠ No prediction data to export';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            const rows = [];
+            entries.forEach(entry => {
+                (entry.predictions || []).forEach((pred, index) => {
+                    rows.push({
+                        query: entry.query,
+                        rank: pred.rank || index + 1,
+                        word: pred.word,
+                        probability: pred.probability,
+                        count: pred.count,
+                        timestamp: entry.timestamp
+                    });
+                });
+            });
+
+            if (rows.length === 0) {
+                errorDiv.textContent = '⚠ No prediction rows available';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            errorDiv.classList.remove('show');
+            const csvData = buildCsv(rows);
+            const dateStamp = new Date().toISOString().slice(0, 10);
+            downloadCsv(csvData, `predictions_${type}_${dateStamp}.csv`);
+        }
+
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Event listener
+        queryInput.addEventListener('keyup', debounce(predictQuery, 300));
+        renderHistory();
+
+        if (clearHistoryBtn) {
+            clearHistoryBtn.addEventListener('click', () => {
+                localStorage.removeItem(HISTORY_KEY);
+                renderHistory();
+            });
+        }
+
+        if (downloadLatestBtn) {
+            downloadLatestBtn.addEventListener('click', () => exportCsv('latest'));
+        }
+
+        if (downloadHistoryBtn) {
+            downloadHistoryBtn.addEventListener('click', () => exportCsv('history'));
+        }
+
+        // Reveal animations
+        const revealItems = document.querySelectorAll('.reveal');
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+            revealItems.forEach(item => item.classList.add('is-visible'));
+        } else {
+            const revealObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        revealObserver.unobserve(entry.target);
+                    }
+                });
+            }, {
+                threshold: 0.2,
+                rootMargin: '0px 0px -10% 0px'
+            });
+
+            revealItems.forEach(item => revealObserver.observe(item));
         }
     </script>
 </body>
