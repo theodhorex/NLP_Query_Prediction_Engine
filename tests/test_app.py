@@ -24,7 +24,7 @@ class AppRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json, {'error': 'Please enter maximum 2 words'})
 
-    def test_predict_accepts_partial_single_word_queries(self):
+    def test_predict_accepts_single_word_query(self):
         response = self.client.post('/api/predict', json={'query': 'tes'})
 
         self.assertEqual(response.status_code, 200)
