@@ -31,15 +31,24 @@ class LanguageModel:
 
     def predict_next_word(self, query_words):
         """Predict next word based on query using Language Model"""
+        if not query_words:
+            return []
+
         query_words = [w.lower() for w in query_words]
         predictions = []
 
+        last_word = query_words[-1]
+        is_partial = len(query_words) > 0 and last_word and last_word[-1].isalpha()
+
         if len(query_words) == 1:
-            word = query_words[0]
+            word = last_word
             candidates = defaultdict(float)
 
             for (w1, w2), count in self.bigrams.items():
-                if w1 == word:
+                if w1.startswith(word) and len(word) >= 2:
+                    prob = count / self.unigrams[w1] if self.unigrams[w1] > 0 else 0
+                    candidates[w2] = prob
+                elif w1 == word:
                     prob = count / self.unigrams[w1] if self.unigrams[w1] > 0 else 0
                     candidates[w2] = prob
 
@@ -51,7 +60,10 @@ class LanguageModel:
             candidates = defaultdict(float)
 
             for (tw1, tw2, tw3), count in self.trigrams.items():
-                if tw1 == w1 and tw2 == w2:
+                if tw1 == w1 and tw2.startswith(w2) and len(w2) >= 2:
+                    prob = count / self.bigrams.get((w1, w2), 1) if self.bigrams.get((w1, w2), 0) > 0 else 0
+                    candidates[tw3] = prob
+                elif tw1 == w1 and tw2 == w2:
                     prob = count / self.bigrams.get((w1, w2), 1) if self.bigrams.get((w1, w2), 0) > 0 else 0
                     candidates[tw3] = prob
 
@@ -60,7 +72,10 @@ class LanguageModel:
 
             if not predictions:
                 for (tw1, tw2), count in self.bigrams.items():
-                    if tw1 == w2:
+                    if tw1.startswith(w2) and len(w2) >= 2:
+                        prob = count / self.unigrams[tw1] if self.unigrams[tw1] > 0 else 0
+                        candidates[tw2] = prob
+                    elif tw1 == w2:
                         prob = count / self.unigrams[w2] if self.unigrams[w2] > 0 else 0
                         candidates[tw2] = prob
 
