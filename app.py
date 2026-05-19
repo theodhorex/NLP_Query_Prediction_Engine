@@ -1,0 +1,59 @@
+from flask import Flask, render_template, request, jsonify
+import os
+import sys
+
+scripts_path = os.path.join(os.path.dirname(__file__), 'scripts')
+sys.path.insert(0, scripts_path)
+
+from preprocess import DocumentPreprocessor
+from language_model import LanguageModel
+
+app = Flask(__name__)
+
+preprocessor = DocumentPreprocessor()
+model = LanguageModel()
+
+CORPUS_PATH = os.path.join(os.path.dirname(__file__), 'corpus')
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'data', 'language_model.pkl')
+
+def load_or_build_model():
+    if os.path.exists(MODEL_PATH):
+        model.load_model(MODEL_PATH)
+        print("Model loaded from cache")
+    else:
+        documents = preprocessor.load_documents_from_folder(CORPUS_PATH)
+        if documents:
+            model.build_model(documents)
+            model.save_model(MODEL_PATH)
+        else:
+            print("No documents found!")
+    return model
+
+@app.route('/')
+def index():
+    stats = model.get_statistics()
+    return render_template('index.html', stats=stats)
+
+@app.route('/api/predict', methods=['POST'])
+def predict():
+    data = request.json
+    query = data.get('query', '').strip()
+
+    if not query:
+        return jsonify({'error': 'Query cannot be empty'}), 400
+
+    query_words = query.split()
+    predictions = model.predict_next_word(query_words)
+
+    return jsonify({
+        'query': query,
+        'predictions': [{'word': word, 'probability': float(prob)} for word, prob in predictions]
+    })
+
+@app.route('/api/stats', methods=['GET'])
+def stats():
+    return jsonify(model.get_statistics())
+
+if __name__ == '__main__':
+    load_or_build_model()
+    app.run(debug=True, port=5000)

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Query Prediction System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 700px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .predictions {
+            display: none;
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .predictions.show {
+            display: block;
+        }
+
+        .prediction-title {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .prediction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            transition: all 0.2s;
+        }
+
+        .prediction-item:hover {
+            background: #f0f0f0;
+            transform: translateX(5px);
+        }
+
+        .prediction-word {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .prediction-prob {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .error {
+            color: #e74c3c;
+            padding: 12px;
+            background: #fadbd8;
+            border-radius: 6px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .info {
+            background: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 12px 15px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #2c3e50;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Query Prediction System</h1>
+        <p class="subtitle">Language Model-based Next Word Predictor</p>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="unigrams">0</div>
+                <div class="stat-label">Unigrams</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="bigrams">0</div>
+                <div class="stat-label">Bigrams</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="trigrams">0</div>
+                <div class="stat-label">Trigrams</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="vocab">0</div>
+                <div class="stat-label">Vocabulary</div>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="query">Enter Query (1-2 words)</label>
+            <input
+                type="text"
+                id="query"
+                placeholder="e.g., 'machine learning' or 'artificial'"
+                autocomplete="off"
+            >
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="predictions" id="predictions">
+            <div class="prediction-title">Top Predictions</div>
+            <div id="predictionsList"></div>
+        </div>
+
+        <div class="info">
+            💡 Tips: Enter 1 or 2 words to see predicted next words based on the language model.
+        </div>
+    </div>
+
+    <script>
+        const queryInput = document.getElementById('query');
+        const predictionsDiv = document.getElementById('predictions');
+        const predictionsList = document.getElementById('predictionsList');
+        const errorDiv = document.getElementById('error');
+
+        fetch('/api/stats')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('unigrams').textContent = data.unigrams_count.toLocaleString();
+                document.getElementById('bigrams').textContent = data.bigrams_count.toLocaleString();
+                document.getElementById('trigrams').textContent = data.trigrams_count.toLocaleString();
+                document.getElementById('vocab').textContent = data.vocabulary_size.toLocaleString();
+            });
+
+        queryInput.addEventListener('keyup', debounce(predictQuery, 300));
+
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func(...args), delay);
+            };
+        }
+
+        function predictQuery() {
+            const query = queryInput.value.trim();
+            errorDiv.classList.remove('show');
+
+            if (!query) {
+                predictionsDiv.classList.remove('show');
+                return;
+            }
+
+            const words = query.split(/\s+/).filter(w => w.length > 0);
+            if (words.length > 2) {
+                errorDiv.textContent = 'Please enter maximum 2 words';
+                errorDiv.classList.add('show');
+                predictionsDiv.classList.remove('show');
+                return;
+            }
+
+            fetch('/api/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    errorDiv.textContent = data.error;
+                    errorDiv.classList.add('show');
+                    predictionsDiv.classList.remove('show');
+                    return;
+                }
+
+                predictionsList.innerHTML = '';
+                if (data.predictions.length === 0) {
+                    predictionsList.innerHTML = '<p style="color: #999; padding: 20px; text-align: center;">No predictions found</p>';
+                } else {
+                    data.predictions.forEach(pred => {
+                        const item = document.createElement('div');
+                        item.className = 'prediction-item';
+                        item.innerHTML = `
+                            <span class="prediction-word">${pred.word}</span>
+                            <span class="prediction-prob">${(pred.probability * 100).toFixed(1)}%</span>
+                        `;
+                        predictionsList.appendChild(item);
+                    });
+                }
+                predictionsDiv.classList.add('show');
+            })
+            .catch(err => {
+                errorDiv.textContent = 'Error: ' + err.message;
+                errorDiv.classList.add('show');
+            });
+        }
+    </script>
+</body>
+</html>
