@@ -3,7 +3,7 @@ import unittest
 import app
 
 
-class AppRouteTests(unittest.TestCase):
+class AppEndpointTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         app.load_or_build_model()

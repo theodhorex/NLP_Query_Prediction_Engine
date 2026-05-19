@@ -30,7 +30,7 @@ def load_or_build_model():
     return model
 
 def ensure_model_loaded():
-    if not model.unigrams:
+    if model is None or not getattr(model, 'unigrams', None):
         load_or_build_model()
 
 @app.route('/')
