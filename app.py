@@ -17,6 +17,9 @@ CORPUS_PATH = os.path.join(os.path.dirname(__file__), 'corpus')
 MODEL_PATH = os.path.join(os.path.dirname(__file__), 'data', 'language_model.pkl')
 
 def load_or_build_model():
+    global model
+    if model is None:
+        model = LanguageModel()
     if os.path.exists(MODEL_PATH):
         model.load_model(MODEL_PATH)
         print("Model loaded from cache")

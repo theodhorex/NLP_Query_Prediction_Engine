@@ -18,7 +18,7 @@ class AppEndpointTests(unittest.TestCase):
         self.assertGreater(response.json['trigrams_count'], 0)
         self.assertGreater(response.json['vocabulary_size'], 0)
 
-    def test_predict_rejects_more_than_two_words(self):
+    def test_predict_rejects_three_or_more_words(self):
         response = self.client.post('/api/predict', json={'query': 'one two three'})
 
         self.assertEqual(response.status_code, 400)
