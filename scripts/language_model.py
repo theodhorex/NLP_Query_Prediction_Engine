@@ -10,6 +10,9 @@ class LanguageModel:
         self.trigrams = Counter()
         self.vocabulary = set()
 
+    def is_loaded(self):
+        return bool(self.unigrams)
+
     def build_model(self, documents):
         """Build unigram, bigram, trigram from documents"""
         all_tokens = []
