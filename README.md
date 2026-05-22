@@ -98,6 +98,10 @@ Open http://localhost:5000
 ---
 
 For details, examples, and attribution see the repository on GitHub.
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for the full text.
 ├── templates/
 │   └── index.html              # Web UI (Flask)
 │
