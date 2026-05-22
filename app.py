@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, render_template, request, jsonify, Response, send_from_directory
 from datetime import datetime, timezone
 import csv
 import io
@@ -186,6 +186,30 @@ def not_found(error):
 @app.errorhandler(500)
 def server_error(error):
     return jsonify({'error': 'Internal server error'}), 500
+
+
+@app.route('/logo.png')
+def serve_logo():
+    try:
+        return send_from_directory(os.path.dirname(__file__), 'logo.png')
+    except Exception:
+        return ('', 404)
+
+
+@app.route('/favicon.png')
+def serve_favicon_png():
+    try:
+        return send_from_directory(os.path.dirname(__file__), 'favicon.png')
+    except Exception:
+        return ('', 404)
+
+
+@app.route('/favicon.ico')
+def serve_favicon_ico():
+    try:
+        return send_from_directory(os.path.dirname(__file__), 'favicon.ico')
+    except Exception:
+        return ('', 404)
 
 if __name__ == '__main__':
     try:
