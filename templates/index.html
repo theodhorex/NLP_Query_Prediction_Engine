@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Query Prediction Engine</title>
+    <meta name="description" content="Next-word prediction using n-gram language models — transparent, privacy-aware.">
+    <meta property="og:title" content="Query Prediction Engine">
+    <meta property="og:description" content="Next-word prediction using n-gram language models — transparent, privacy-aware.">
+    <meta property="og:image" content="/favicon.png">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="256x256">
+    <link rel="apple-touch-icon" href="/favicon.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
         * {
@@ -186,6 +195,13 @@
             height: 20px;
             background: var(--bg-dark);
             border-radius: 2px;
+        }
+
+        .nav-logo-img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+            border-radius: 4px;
         }
 
         .nav-links {
@@ -1176,7 +1192,7 @@
     <!-- Navigation -->
     <nav class="container py-10 reveal reveal-down">
         <div class="nav-logo">
-            <div class="nav-logo-icon"></div>
+            <img src="/logo.png" alt="Query Engine logo" class="nav-logo-img">
             Query Engine
         </div>
         <ul class="nav-links">
