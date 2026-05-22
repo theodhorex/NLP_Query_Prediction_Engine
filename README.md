@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="logo.png" alt="Query Prediction Engine" width="140" style="margin-bottom:12px;">
+
 # Query Prediction Engine
 
 **Next-word prediction using N-gram Language Models — transparent, fast, and privacy-aware**
