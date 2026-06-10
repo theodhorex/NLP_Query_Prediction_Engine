@@ -1,353 +1,262 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Corpus Statistics</title>
-    <meta name="description" content="Corpus statistics and model metrics for the Query Prediction Engine.">
-    <meta property="og:title" content="Query Prediction Engine — Corpus Statistics">
-    <meta property="og:description" content="Detailed corpus metrics used by the Query Prediction Engine.">
-    <meta property="og:image" content="/static/favicon.png">
-    <meta name="twitter:card" content="summary_large_image">
-    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
-    <link rel="icon" href="/static/favicon.png" type="image/png" sizes="256x256">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Statistik Korpus — Query Prediction Engine</title>
+  <meta name="description" content="Statistik korpus dan metrik model untuk Query Prediction Engine.">
+  <meta property="og:title" content="Query Prediction Engine — Statistik Korpus">
+  <meta property="og:description" content="Metrik korpus terperinci yang digunakan oleh Query Prediction Engine.">
+  <meta property="og:image" content="/static/favicon.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+  <link rel="icon" href="/static/favicon.png" type="image/png" sizes="256x256">
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0052ff',
+            'primary-active': '#003ecc',
+            'primary-disabled': '#a8b8cc',
+            ink: '#0a0b0d',
+            body: '#5b616e',
+            muted: '#7c828a',
+            'muted-soft': '#a8acb3',
+            hairline: '#dee1e6',
+            'hairline-soft': '#eef0f3',
+            canvas: '#ffffff',
+            'surface-soft': '#f7f7f7',
+            'surface-strong': '#eef0f3',
+            'surface-dark': '#0a0b0d',
+            'surface-dark-elevated': '#16181c',
+            'on-dark': '#ffffff',
+            'on-dark-soft': '#a8acb3',
+            'semantic-up': '#05b169',
+            'semantic-down': '#cf202f',
+          },
+          fontFamily: {
+            display: ['Inter', '-apple-system', 'system-ui', 'sans-serif'],
+            body: ['Inter', '-apple-system', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          borderRadius: {
+            xs: '4px',
+            sm: '8px',
+            md: '12px',
+            lg: '16px',
+            xl: '24px',
+            pill: '100px',
+            full: '9999px',
+          },
+          spacing: {
+            xxs: '4px',
+            xs: '8px',
+            sm: '12px',
+            base: '16px',
+            md: '20px',
+            lg: '24px',
+            xl: '32px',
+            xxl: '48px',
+            section: '96px',
+          },
+          boxShadow: {
+            card: '0 4px 12px rgba(0, 0, 0, 0.04)',
+          },
+          fontSize: {
+            'display-md': ['44px', { lineHeight: '1.09', letterSpacing: '-1px', fontWeight: '400' }],
+            'display-sm': ['36px', { lineHeight: '1.11', letterSpacing: '-0.5px', fontWeight: '400' }],
+            'title-md': ['18px', { lineHeight: '1.33' }],
+            'number-display': ['18px', { lineHeight: '1.4' }],
+          },
         }
-
-        :root {
-            --bg-cream: #F7F5F0;
-            --bg-dark: #0B0C0E;
-            --accent-cyan: #06B6D4;
-            --accent-green: #10B981;
-            --text-primary: #1F2937;
-            --text-secondary: #6B7280;
-            --border-light: #E5E7EB;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-cream);
-            color: var(--text-primary);
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 48px 24px 96px;
-        }
-
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.9rem;
-            margin-bottom: 24px;
-        }
-
-        .back-link:hover {
-            color: var(--bg-dark);
-        }
-
-        .header {
-            display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
-            gap: 40px;
-            margin-bottom: 40px;
-        }
-
-        .header h1 {
-            font-size: 2.6rem;
-            line-height: 1.2;
-        }
-
-        .header p {
-            color: var(--text-secondary);
-            font-size: 1rem;
-        }
-
-        .overview-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-
-        .overview-card {
-            background: white;
-            border: 1px solid var(--border-light);
-            border-radius: 8px;
-            padding: 20px;
-        }
-
-        .overview-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            font-family: 'JetBrains Mono', monospace;
-            margin-bottom: 8px;
-        }
-
-        .overview-label {
-            font-size: 0.75rem;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-            color: var(--text-secondary);
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 24px;
-            margin-bottom: 40px;
-        }
-
-        .stats-card {
-            background: white;
-            border: 1px solid var(--border-light);
-            border-radius: 8px;
-            padding: 24px;
-        }
-
-        .stats-card h3 {
-            font-size: 1.1rem;
-            margin-bottom: 16px;
-        }
-
-        .list-row {
-            display: grid;
-            grid-template-columns: 1.2fr 2fr 0.8fr;
-            gap: 12px;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-        }
-
-        .list-row:last-child {
-            border-bottom: none;
-        }
-
-        .list-word {
-            font-weight: 600;
-        }
-
-        .list-bar {
-            height: 8px;
-            background: rgba(6, 182, 212, 0.1);
-            border-radius: 999px;
-            overflow: hidden;
-        }
-
-        .list-bar span {
-            display: block;
-            height: 100%;
-            background: var(--accent-cyan);
-        }
-
-        .list-count {
-            text-align: right;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-
-        .table-card {
-            background: white;
-            border: 1px solid var(--border-light);
-            border-radius: 8px;
-            padding: 24px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        thead th {
-            text-align: left;
-            font-size: 0.75rem;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-            color: var(--text-secondary);
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border-light);
-        }
-
-        tbody td {
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            font-size: 0.95rem;
-        }
-
-        tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        .empty-state {
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            padding: 20px 0;
-        }
-
-        @media (max-width: 1024px) {
-            .header {
-                grid-template-columns: 1fr;
-            }
-
-            .overview-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .overview-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+      }
+    }
+  </script>
 </head>
-<body>
-    <div class="container">
-        <a class="back-link" href="/">Back to interface</a>
+<body class="font-body text-body bg-canvas antialiased">
+  <a href="#main-content" class="skip-link">Lewati ke konten utama</a>
 
-        <div class="header">
-            <div>
-                <h1>Corpus statistics</h1>
-                <p>Detailed metrics from the indexed corpus, including totals, vocabulary richness, and top terms.</p>
-            </div>
-            <div>
-                <p>Use this page to validate corpus coverage and inspect what the model learns most often.</p>
-            </div>
-        </div>
+  <main id="main-content">
+    <div class="max-w-[1200px] mx-auto px-lg">
+      <!-- Back link -->
+      <a href="/" class="inline-flex items-center gap-xs text-muted no-underline text-sm font-medium mb-lg pt-xxl transition-colors hover:text-ink nav-item hover-lift">&larr; Kembali ke interface</a>
 
-        <div class="overview-grid">
-            <div class="overview-card">
-                <div class="overview-value" id="totalDocs">0</div>
-                <div class="overview-label">Total Documents</div>
-            </div>
-            <div class="overview-card">
-                <div class="overview-value" id="totalTokens">0</div>
-                <div class="overview-label">Total Tokens</div>
-            </div>
-            <div class="overview-card">
-                <div class="overview-value" id="uniqueWords">0</div>
-                <div class="overview-label">Unique Words</div>
-            </div>
-            <div class="overview-card">
-                <div class="overview-value" id="avgTokens">0</div>
-                <div class="overview-label">Avg Tokens per Doc</div>
-            </div>
+      <!-- Page header -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-xl mb-xxl reveal">
+        <div>
+          <h1 class="font-display text-display-md text-ink">Statistik Korpus</h1>
         </div>
+        <div>
+          <p class="text-base leading-relaxed text-body">Semua metrik dari korpus yang udah diindeks — total token, vocabulary, sama daftar kata yang paling sering muncul. Cocok buat ngecek isi korpus dan ngeliat apa aja yang paling sering dipelajari model.</p>
+        </div>
+      </div>
 
-        <div class="stats-grid">
-            <div class="stats-card">
-                <h3>Top Unigrams</h3>
-                <div id="topUnigrams"></div>
-            </div>
-            <div class="stats-card">
-                <h3>Top Bigrams</h3>
-                <div id="topBigrams"></div>
-            </div>
-        </div>
+      <!-- Loading state -->
+      <div class="js-hidden text-center py-xxl show" id="loading">
+        <div class="spinner" aria-label="Memuat statistik..."></div>
+      </div>
 
-        <div class="table-card">
-            <h3>Corpus Overview</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Document</th>
-                        <th>Token Count</th>
-                        <th>Unique Words</th>
-                    </tr>
-                </thead>
-                <tbody id="documentsTable"></tbody>
-            </table>
-            <div class="empty-state" id="docsEmpty" style="display: none;">No document statistics available.</div>
+      <!-- Overview Cards -->
+      <div class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-base mb-xxl reveal" id="overviewGrid">
+        <div class="bg-canvas border border-hairline rounded-lg p-lg text-center hover-lift reveal reveal-delay-1">
+          <div class="font-mono text-[28px] font-medium leading-[1.3] text-ink mb-xs" id="totalDocs">0</div>
+          <div class="text-xs font-semibold uppercase tracking-[0.5px] text-muted">Total Dokumen</div>
         </div>
+        <div class="bg-canvas border border-hairline rounded-lg p-lg text-center hover-lift reveal reveal-delay-2">
+          <div class="font-mono text-[28px] font-medium leading-[1.3] text-ink mb-xs" id="totalTokens">0</div>
+          <div class="text-xs font-semibold uppercase tracking-[0.5px] text-muted">Total Token</div>
+        </div>
+        <div class="bg-canvas border border-hairline rounded-lg p-lg text-center hover-lift reveal reveal-delay-3">
+          <div class="font-mono text-[28px] font-medium leading-[1.3] text-ink mb-xs" id="uniqueWords">0</div>
+          <div class="text-xs font-semibold uppercase tracking-[0.5px] text-muted">Kata Unik</div>
+        </div>
+        <div class="bg-canvas border border-hairline rounded-lg p-lg text-center hover-lift reveal reveal-delay-4">
+          <div class="font-mono text-[28px] font-medium leading-[1.3] text-ink mb-xs" id="avgTokens">0</div>
+          <div class="text-xs font-semibold uppercase tracking-[0.5px] text-muted">Rata-rata Token / Dok</div>
+        </div>
+      </div>
+
+      <!-- Top Unigrams & Bigrams -->
+      <div class="hidden grid grid-cols-1 lg:grid-cols-2 gap-lg mb-xxl reveal" id="statsGrid">
+        <div class="bg-canvas border border-hairline rounded-xl p-lg hover-lift">
+          <h3 class="font-body text-title-md text-ink mb-base">Unigram Teratas</h3>
+          <div id="topUnigrams"></div>
+        </div>
+        <div class="bg-canvas border border-hairline rounded-xl p-lg hover-lift">
+          <h3 class="font-body text-title-md text-ink mb-base">Bigram Teratas</h3>
+          <div id="topBigrams"></div>
+        </div>
+      </div>
+
+      <!-- Documents Table -->
+      <div class="hidden bg-canvas border border-hairline rounded-xl p-lg mb-section reveal" id="tableCard">
+        <h3 class="font-body text-title-md text-ink mb-base">Ikhtisar Korpus</h3>
+        <table class="w-full border-collapse">
+          <thead>
+            <tr>
+              <th class="text-left text-xs font-semibold tracking-[0.5px] uppercase text-muted pb-sm border-b border-hairline">Dokumen</th>
+              <th class="text-left text-xs font-semibold tracking-[0.5px] uppercase text-muted pb-sm border-b border-hairline">Jumlah Token</th>
+              <th class="text-left text-xs font-semibold tracking-[0.5px] uppercase text-muted pb-sm border-b border-hairline">Kata Unik</th>
+            </tr>
+          </thead>
+          <tbody id="documentsTable"></tbody>
+        </table>
+        <div class="hidden text-center text-muted text-sm p-lg" id="docsEmpty">Tidak ada statistik dokumen yang tersedia.</div>
+      </div>
     </div>
+  </main>
 
-    <script>
-        const topUnigrams = document.getElementById('topUnigrams');
-        const topBigrams = document.getElementById('topBigrams');
-        const documentsTable = document.getElementById('documentsTable');
-        const docsEmpty = document.getElementById('docsEmpty');
+  <script>
+    // === DOM refs ===
+    const topUnigrams = document.getElementById('topUnigrams');
+    const topBigrams = document.getElementById('topBigrams');
+    const documentsTable = document.getElementById('documentsTable');
+    const docsEmpty = document.getElementById('docsEmpty');
+    const loading = document.getElementById('loading');
+    const overviewGrid = document.getElementById('overviewGrid');
+    const statsGrid = document.getElementById('statsGrid');
+    const tableCard = document.getElementById('tableCard');
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
+    // === escapeHtml: sanitize user text ===
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
 
-        function renderTopList(container, items) {
-            container.innerHTML = '';
-            if (!items || items.length === 0) {
-                container.innerHTML = '<div class="empty-state">No data available.</div>';
-                return;
-            }
+    // === renderTopList: render bar chart for top items ===
+    function renderTopList(container, items) {
+      container.innerHTML = '';
+      if (!items || items.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted text-sm p-lg">Tidak ada data tersedia.</div>';
+        return;
+      }
+      const maxCount = Math.max(...items.map(item => item.count || 0), 1);
+      items.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'grid grid-cols-[1.2fr_2fr_0.8fr] gap-sm items-center py-xs border-b border-hairline-soft last:border-b-0';
+        const width = Math.max((item.count / maxCount) * 100, 2);
+        row.innerHTML =
+          '<div class="font-semibold text-ink text-sm">' + escapeHtml(item.word) + '</div>' +
+          '<div class="h-2 bg-[rgba(0,82,255,0.08)] rounded-pill overflow-hidden"><span class="block h-full bg-primary rounded-pill" style="width: ' + width + '%"></span></div>' +
+          '<div class="text-right font-mono text-sm text-body">' + item.count.toLocaleString() + '</div>';
+        container.appendChild(row);
+      });
+    }
 
-            const maxCount = Math.max(...items.map(item => item.count || 0), 1);
-            items.forEach(item => {
-                const row = document.createElement('div');
-                row.className = 'list-row';
-                const width = Math.max((item.count / maxCount) * 100, 2);
-                row.innerHTML = `
-                    <div class="list-word">${escapeHtml(item.word)}</div>
-                    <div class="list-bar"><span style="width: ${width}%"></span></div>
-                    <div class="list-count">${item.count.toLocaleString()}</div>
-                `;
-                container.appendChild(row);
-            });
-        }
+    // === renderDocumentTable: render corpus documents table ===
+    function renderDocumentTable(documents) {
+      documentsTable.innerHTML = '';
+      if (!documents || documents.length === 0) {
+        docsEmpty.classList.remove('hidden');
+        docsEmpty.classList.add('block');
+        return;
+      }
+      docsEmpty.classList.add('hidden');
+      docsEmpty.classList.remove('block');
+      documents.forEach(doc => {
+        const row = document.createElement('tr');
+        row.className = 'border-b border-hairline-soft last:border-b-0';
+        row.innerHTML =
+          '<td class="py-sm text-sm text-ink font-medium">' + escapeHtml(doc.filename) + '</td>' +
+          '<td class="py-sm text-sm text-body font-mono">' + doc.token_count.toLocaleString() + '</td>' +
+          '<td class="py-sm text-sm text-body font-mono">' + doc.unique_words.toLocaleString() + '</td>';
+        documentsTable.appendChild(row);
+      });
+    }
 
-        function renderDocumentTable(documents) {
-            documentsTable.innerHTML = '';
-            if (!documents || documents.length === 0) {
-                docsEmpty.style.display = 'block';
-                return;
-            }
-            docsEmpty.style.display = 'none';
-            documents.forEach(doc => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${escapeHtml(doc.filename)}</td>
-                    <td>${doc.token_count.toLocaleString()}</td>
-                    <td>${doc.unique_words.toLocaleString()}</td>
-                `;
-                documentsTable.appendChild(row);
-            });
-        }
+    // === Fetch stats from API ===
+    fetch('/api/corpus-stats')
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) throw new Error(data.error);
 
-        fetch('/api/corpus-stats')
-            .then(res => res.json())
-            .then(data => {
-                if (data.error) {
-                    throw new Error(data.error);
-                }
+        loading.classList.remove('show');
+        overviewGrid.classList.remove('hidden');
+        statsGrid.classList.remove('hidden');
+        tableCard.classList.remove('hidden');
+        // Trigger reveal for elements that were display:none
+        [overviewGrid, statsGrid, tableCard].forEach(grid => {
+          if (grid) grid.classList.add('is-visible');
+          if (grid) grid.querySelectorAll('.reveal').forEach(child => child.classList.add('is-visible'));
+        });
 
-                document.getElementById('totalDocs').textContent = data.total_documents.toLocaleString();
-                document.getElementById('totalTokens').textContent = data.total_tokens.toLocaleString();
-                document.getElementById('uniqueWords').textContent = data.unique_words.toLocaleString();
-                document.getElementById('avgTokens').textContent = Math.round(data.avg_tokens_per_doc).toLocaleString();
+        document.getElementById('totalDocs').textContent = (data.total_documents || 0).toLocaleString();
+        document.getElementById('totalTokens').textContent = (data.total_tokens || 0).toLocaleString();
+        document.getElementById('uniqueWords').textContent = (data.unique_words || 0).toLocaleString();
+        document.getElementById('avgTokens').textContent = Math.round(data.avg_tokens_per_doc || 0).toLocaleString();
 
-                renderTopList(topUnigrams, data.top_unigrams || []);
-                renderTopList(topBigrams, data.top_bigrams || []);
-                renderDocumentTable(data.documents || []);
-            })
-            .catch(err => {
-                console.error('Failed to load corpus stats:', err);
-                docsEmpty.style.display = 'block';
-            });
-    </script>
+        renderTopList(topUnigrams, data.top_unigrams || []);
+        renderTopList(topBigrams, data.top_bigrams || []);
+        renderDocumentTable(data.documents || []);
+      })
+      .catch(err => {
+        loading.classList.remove('show');
+        console.error('Gagal memuat statistik korpus:', err);
+        docsEmpty.classList.remove('hidden');
+        docsEmpty.classList.add('block');
+        document.querySelector('main > div').innerHTML += '<div class="text-center text-muted text-sm p-lg">Gagal memuat statistik korpus. Pastikan server berjalan dengan benar.</div>';
+      });
+
+    // === Reveal animations via IntersectionObserver ===
+    const revealItems = document.querySelectorAll('.reveal');
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+      revealItems.forEach(item => item.classList.add('is-visible'));
+    } else {
+      const revealObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.2, rootMargin: '0px 0px -10% 0px' });
+      revealItems.forEach(item => revealObserver.observe(item));
+    }
+  </script>
 </body>
 </html>

@@ -1,231 +1,309 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pencarian Dokumen — Query Prediction Engine</title>
-    <meta name="description" content="Pencarian dokumen bilingual menggunakan TF-IDF dan Cosine Similarity.">
-    <link rel="icon" href="/static/favicon.ico">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --bg-primary: #0f1117;
-            --bg-secondary: #1a1d2e;
-            --bg-card: #1e2235;
-            --accent: #6c63ff;
-            --accent-hover: #5a52d5;
-            --text-primary: #e2e8f0;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
-            --border: #2d3748;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --error: #ef4444;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pencarian Dokumen — Query Prediction Engine</title>
+  <meta name="description" content="Pencarian dokumen bilingual menggunakan TF-IDF dan Cosine Similarity.">
+  <link rel="icon" href="/static/favicon.ico">
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#0052ff',
+            'primary-active': '#003ecc',
+            'primary-disabled': '#a8b8cc',
+            ink: '#0a0b0d',
+            body: '#5b616e',
+            muted: '#7c828a',
+            'muted-soft': '#a8acb3',
+            hairline: '#dee1e6',
+            'hairline-soft': '#eef0f3',
+            canvas: '#ffffff',
+            'surface-soft': '#f7f7f7',
+            'surface-strong': '#eef0f3',
+            'surface-dark': '#0a0b0d',
+            'surface-dark-elevated': '#16181c',
+            'on-dark': '#ffffff',
+            'on-dark-soft': '#a8acb3',
+            'semantic-up': '#05b169',
+            'semantic-down': '#cf202f',
+          },
+          fontFamily: {
+            display: ['Inter', '-apple-system', 'system-ui', 'sans-serif'],
+            body: ['Inter', '-apple-system', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          borderRadius: {
+            xs: '4px',
+            sm: '8px',
+            md: '12px',
+            lg: '16px',
+            xl: '24px',
+            pill: '100px',
+            full: '9999px',
+          },
+          spacing: {
+            xxs: '4px',
+            xs: '8px',
+            sm: '12px',
+            base: '16px',
+            md: '20px',
+            lg: '24px',
+            xl: '32px',
+            xxl: '48px',
+            section: '96px',
+          },
+          boxShadow: {
+            card: '0 4px 12px rgba(0, 0, 0, 0.04)',
+          },
+          fontSize: {
+            'display-sm': ['36px', { lineHeight: '1.11', letterSpacing: '-0.5px', fontWeight: '400' }],
+            'title-lg': ['32px', { lineHeight: '1.13', letterSpacing: '-0.4px' }],
+          },
         }
-        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; }
-        .container { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
-        nav { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; border-bottom: 1px solid var(--border); margin-bottom: 40px; }
-        .nav-logo { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); text-decoration: none; }
-        .nav-links { display: flex; gap: 24px; list-style: none; }
-        .nav-links a { text-decoration: none; color: var(--text-secondary); font-size: 0.9rem; }
-        .nav-links a:hover { color: var(--text-primary); }
-        @media (max-width: 640px) { .nav-links { display: none; } }
-        .header { text-align: center; margin-bottom: 32px; }
-        .header h1 { font-size: 2rem; margin-bottom: 8px; }
-        .header p { color: var(--text-secondary); font-size: 1rem; }
-        .search-box { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
-        .search-row { display: flex; gap: 12px; }
-        .search-input { flex: 1; padding: 14px 18px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--bg-card); color: var(--text-primary); }
-        .search-input:focus { outline: none; border-color: var(--accent); }
-        .search-input::placeholder { color: var(--text-muted); }
-        .search-btn { padding: 14px 28px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 500; cursor: pointer; transition: background 0.2s; }
-        .search-btn:hover { background: var(--accent-hover); }
-        .search-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .filter-row { display: flex; gap: 12px; margin-top: 14px; align-items: center; }
-        .filter-row label { font-size: 0.85rem; color: var(--text-secondary); }
-        .filter-select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; background: var(--bg-card); color: var(--text-primary); }
-        .error-msg { display: none; padding: 12px 16px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; color: var(--error); margin-bottom: 16px; }
-        .error-msg.show { display: block; }
-        .loading { display: none; text-align: center; padding: 40px; }
-        .loading.show { display: block; }
-        .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .results { display: none; }
-        .results.show { display: block; }
-        .result-count { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px; }
-        // PERUBAHAN: sort indicator
-        .sort-info { font-size: 0.75rem; color: var(--text-muted); font-style: italic; margin-bottom: 16px; }
-        // PERUBAHAN: result card dark theme + progress bar
-        .result-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 12px; transition: border-color 0.2s; }
-        .result-card:hover { border-color: var(--accent); }
-        .result-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .result-rank { width: 24px; height: 24px; background: var(--accent); color: white; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; flex-shrink: 0; }
-        .result-filename { font-weight: 600; color: var(--text-primary); }
-        .result-lang { font-size: 0.7rem; padding: 2px 8px; border-radius: 999px; font-weight: 600; text-transform: uppercase; }
-        .result-lang.en { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
-        .result-lang.id { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
-        // PERUBAHAN: progress bar + score label
-        .result-score-row { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
-        .result-score-label { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; }
-        .result-progress-wrap { flex: 1; height: 8px; background: var(--bg-secondary); border-radius: 999px; overflow: hidden; }
-        .result-progress-bar { height: 100%; border-radius: 999px; transition: width 0.4s ease; }
-        .result-progress-bar.high { background: var(--success); }
-        .result-progress-bar.medium { background: var(--warning); }
-        .result-progress-bar.low { background: var(--accent); }
-        .result-score-value { font-size: 0.85rem; font-family: 'JetBrains Mono', monospace; font-weight: 600; white-space: nowrap; min-width: 4ch; text-align: right; }
-        .result-snippet { margin-top: 10px; font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; }
-        .no-results { text-align: center; padding: 40px; color: var(--text-secondary); border: 1px dashed var(--border); border-radius: 8px; background: var(--bg-card); }
-        footer { margin-top: 60px; padding: 24px 0; border-top: 1px solid var(--border); text-align: center; font-size: 0.85rem; color: var(--text-muted); }
-    </style>
+      }
+    }
+  </script>
 </head>
-<body>
-    <nav class="container">
-        <a href="/" class="nav-logo">Query Engine</a>
-        <ul class="nav-links">
-            <li><a href="/">Prediksi</a></li>
-            <li><a href="/stats">Statistik</a></li>
-            <li><a href="/search" style="color: var(--bg-dark); font-weight: 600;">Pencarian</a></li>
-        </ul>
-    </nav>
+<body class="font-body text-body bg-canvas antialiased">
+  <a href="#main-content" class="skip-link">Lewati ke konten utama</a>
 
-    <main class="container">
-        <div class="header">
-            <h1>Pencarian Dokumen Bilingual</h1>
-            <p>Cari di 30 dokumen EN + 3 dokumen ID menggunakan TF-IDF dan Cosine Similarity.</p>
+  <main id="main-content">
+    <div class="max-w-[1200px] mx-auto px-lg">
+      <!-- Back link -->
+      <a href="/" class="inline-flex items-center gap-xs text-muted no-underline text-sm font-medium mb-lg pt-xxl transition-colors hover:text-ink nav-item hover-lift">&larr; Kembali ke interface</a>
+
+      <!-- Header -->
+      <div class="text-center mb-xl reveal">
+        <h1 class="font-display text-display-sm text-ink">Pencarian Dokumen Bilingual</h1>
+        <p class="text-base text-body mt-xs">Cari dokumen bilingual pake TF-IDF dan Cosine Similarity. Tersedia 30 dokumen EN + 3 dokumen ID. Tinggal ketik, langsung muncul yang paling relevan.</p>
+      </div>
+
+      <!-- Search Box -->
+      <div class="bg-surface-soft border border-hairline rounded-xl p-lg mb-lg hover-lift reveal reveal-delay-1">
+        <div class="flex flex-col sm:flex-row gap-sm">
+          <div class="flex-1 relative">
+            <label for="searchInput" class="sr-only">Query pencarian</label>
+            <input type="text" id="searchInput" class="block w-full h-11 px-md py-sm bg-canvas border border-hairline rounded-pill font-body text-base text-ink placeholder:text-muted-soft transition-colors focus:outline-none focus:border-primary focus:shadow-[0_0_0_1px_#0052ff]" placeholder="Cth: machine learning, NLP, kecerdasan buatan" autocomplete="off">
+          </div>
+          <button id="searchBtn" class="inline-flex items-center justify-center gap-xs font-body text-base font-semibold leading-[1.15] no-underline whitespace-nowrap bg-primary text-white rounded-pill h-11 px-md py-sm transition-colors hover:bg-primary-active cursor-pointer border-none w-full sm:w-auto btn-scale">Cari</button>
         </div>
-
-        <div class="search-box">
-            <div class="search-row">
-                <input type="text" id="searchInput" class="search-input" placeholder="Cth: machine learning, kecerdasan buatan, NLP" autocomplete="off">
-                <button id="searchBtn" class="search-btn">Cari</button>
+        <div class="flex gap-sm mt-base items-center">
+          <label class="text-sm text-body font-medium">Bahasa:</label>
+          <div class="relative">
+            <select id="langFilter" class="sr-only">
+              <option value="all">Semua</option>
+              <option value="en">Inggris</option>
+              <option value="id">Indonesia</option>
+            </select>
+            <button type="button" id="langDropdownBtn" class="inline-flex items-center gap-2 h-11 px-md border border-hairline rounded-pill font-body text-sm bg-canvas text-ink cursor-pointer transition-all duration-200 hover:border-ink focus:outline-none focus:border-primary focus:shadow-[0_0_0_1px_#0052ff] whitespace-nowrap btn-scale">
+              <span id="langDisplay">Semua</span>
+              <svg class="w-4 h-4 text-muted transition-transform duration-200" id="langChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div id="langPanel" class="absolute top-full right-0 mt-2 w-40 bg-canvas border border-hairline rounded-xl shadow-card opacity-0 invisible transition-all duration-200 z-50 py-1.5 before:content-[''] before:absolute before:top-[-6px] before:right-5 before:w-3 before:h-3 before:bg-canvas before:border-t before:border-l before:border-hairline before:rotate-45">
+              <button type="button" class="block w-full text-left px-md py-2.5 no-underline text-body hover:text-ink hover:bg-surface-soft font-body text-sm font-medium leading-[1.4] transition-colors" data-lang="all">Semua</button>
+              <div class="mx-md my-0.5 h-px bg-hairline"></div>
+              <button type="button" class="block w-full text-left px-md py-2.5 no-underline text-body hover:text-ink hover:bg-surface-soft font-body text-sm font-medium leading-[1.4] transition-colors" data-lang="en">Inggris</button>
+              <div class="mx-md my-0.5 h-px bg-hairline"></div>
+              <button type="button" class="block w-full text-left px-md py-2.5 no-underline text-body hover:text-ink hover:bg-surface-soft font-body text-sm font-medium leading-[1.4] transition-colors" data-lang="id">Indonesia</button>
             </div>
-            <div class="filter-row">
-                <label for="langFilter">Bahasa:</label>
-                <select id="langFilter" class="filter-select">
-                    <option value="all">Semua</option>
-                    <option value="en">Inggris</option>
-                    <option value="id">Indonesia</option>
-                </select>
-            </div>
+          </div>
         </div>
+      </div>
 
-        <div class="error-msg" id="errorMsg"></div>
-        <div class="loading" id="loading"><div class="spinner"></div></div>
+      <!-- Error -->
+      <div class="js-hidden p-sm px-base bg-[rgba(207,32,47,0.06)] border border-[rgba(207,32,47,0.15)] rounded-sm text-semantic-down text-sm mb-base" id="errorMsg" role="alert"></div>
 
-        <div class="results" id="results">
-            <div class="result-count" id="resultCount"></div>
-            // PERUBAHAN: sort indicator
-            <div class="sort-info" id="sortInfo">Diurutkan berdasarkan cosine similarity tertinggi</div>
-            <div id="resultsList"></div>
-        </div>
-    </main>
+      <!-- Loading -->
+      <div class="js-hidden text-center p-xl" id="loading">
+        <div class="spinner" aria-label="Mencari dokumen..."></div>
+      </div>
 
-    <footer>
-        NLP Query Prediction Engine · TF-IDF Search · UKDW 2026
-    </footer>
+      <!-- Results -->
+      <div class="js-hidden" id="results">
+        <div class="text-sm text-muted mb-xs" id="resultCount"></div>
+        <div class="text-xs text-muted-soft italic mb-base" id="sortInfo">Diurutkan berdasarkan cosine similarity tertinggi</div>
+        <div id="resultsList"></div>
+      </div>
+    </div>
+  </main>
 
-    <script>
-        const searchInput = document.getElementById('searchInput');
-        const searchBtn = document.getElementById('searchBtn');
-        const results = document.getElementById('results');
-        const resultsList = document.getElementById('resultsList');
-        const resultCount = document.getElementById('resultCount');
-        const errorMsg = document.getElementById('errorMsg');
-        const loading = document.getElementById('loading');
-        const langFilter = document.getElementById('langFilter');
+  <!-- Footer -->
+  <footer class="mt-section py-lg border-t border-hairline text-center text-sm text-muted reveal">
+    NLP Query Prediction Engine · TF-IDF Search · UKDW 2026
+  </footer>
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+  <script>
+    // === DOM refs ===
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const results = document.getElementById('results');
+    const resultsList = document.getElementById('resultsList');
+    const resultCount = document.getElementById('resultCount');
+    const errorMsg = document.getElementById('errorMsg');
+    const loading = document.getElementById('loading');
+    const langFilter = document.getElementById('langFilter');
+
+    // === escapeHtml: sanitize user text ===
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // === doSearch: call /api/search and render results ===
+    function doSearch() {
+      const query = searchInput.value.trim();
+      const language = langFilter.value;
+      errorMsg.classList.remove('show');
+      results.classList.remove('show');
+
+      if (!query) {
+        errorMsg.textContent = 'Query tidak boleh kosong';
+        errorMsg.classList.add('show');
+        return;
+      }
+
+      if (query.length > 200) {
+        errorMsg.textContent = 'Query terlalu panjang (maks 200 karakter)';
+        errorMsg.classList.add('show');
+        return;
+      }
+
+      loading.classList.add('show');
+      searchBtn.disabled = true;
+
+      fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, top_k: 10, language })
+      })
+      .then(res => res.json())
+      .then(data => {
+        loading.classList.remove('show');
+        searchBtn.disabled = false;
+
+        if (data.error) {
+          errorMsg.textContent = data.error;
+          errorMsg.classList.add('show');
+          return;
         }
 
-        function doSearch() {
-            const query = searchInput.value.trim();
-            const language = langFilter.value;
-            errorMsg.classList.remove('show');
-            results.classList.remove('show');
+        resultsList.innerHTML = '';
+        if (data.results.length === 0) {
+          resultsList.innerHTML = '<div class="text-center p-xl text-muted border border-dashed border-hairline rounded-lg bg-surface-soft">Tidak ada dokumen yang cocok.</div>';
+          document.getElementById('sortInfo').style.display = 'none';
+        } else {
+          data.results.forEach(r => {
+            const card = document.createElement('div');
+            card.className = 'hover-lift bg-canvas border border-hairline rounded-lg p-base px-md mb-sm transition-colors hover:border-primary hover:shadow-card';
+            card.setAttribute('role', 'article');
 
-            if (!query) {
-                errorMsg.textContent = 'Query tidak boleh kosong';
-                errorMsg.classList.add('show');
-                return;
-            }
+            const langLabel = r.language === 'en' ? 'EN' : 'ID';
+            const langClass = r.language === 'en' ? 'en' : 'id';
+            const langAria = r.language === 'en' ? 'Bahasa Inggris' : 'Bahasa Indonesia';
+            const scorePct = (r.score * 100);
+            const barClass = scorePct >= 70 ? 'high' : (scorePct >= 40 ? 'medium' : 'low');
 
-            if (query.length > 200) {
-                errorMsg.textContent = 'Query terlalu panjang (max 200 karakter)';
-                errorMsg.classList.add('show');
-                return;
-            }
+            let scoreColor = '#05b169';
+            let scoreText = 'Tinggi';
+            if (barClass === 'medium') { scoreColor = '#f4b000'; scoreText = 'Sedang'; }
+            else if (barClass === 'low') { scoreColor = '#0052ff'; scoreText = 'Rendah'; }
 
-            loading.classList.add('show');
-            searchBtn.disabled = true;
+            const langColor = r.language === 'en'
+              ? 'bg-[rgba(0,82,255,0.1)] text-primary'
+              : 'bg-[rgba(5,177,105,0.1)] text-semantic-up';
 
-            fetch('/api/search', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query, top_k: 10, language })
-            })
-            .then(res => res.json())
-            .then(data => {
-                loading.classList.remove('show');
-                searchBtn.disabled = false;
+            card.innerHTML =
+              '<div class="flex items-center gap-sm flex-wrap">' +
+                '<span class="w-6 h-6 bg-primary text-white rounded-xs flex items-center justify-center text-xs font-semibold shrink-0">' + r.rank + '</span>' +
+                '<span class="font-semibold text-ink text-[15px]">' + escapeHtml(r.filename) + '</span>' +
+                '<span class="text-xs px-[10px] py-[2px] rounded-pill font-semibold uppercase tracking-wide ' + langColor + '" aria-label="' + langAria + '">' + langLabel + '</span>' +
+              '</div>' +
+              '<div class="flex items-center gap-sm mt-sm">' +
+                '<span class="text-xs text-muted whitespace-nowrap">Kemiripan:</span>' +
+                '<div class="flex-1 h-2 bg-hairline-soft rounded-pill overflow-hidden" role="progressbar" aria-valuenow="' + scorePct.toFixed(1) + '" aria-valuemin="0" aria-valuemax="100">' +
+                  '<div class="h-full rounded-pill transition-all duration-[400ms]" style="width: ' + scorePct + '%; background: ' + scoreColor + '"></div>' +
+                '</div>' +
+                '<span class="font-mono text-sm font-medium whitespace-nowrap min-w-[5ch] text-right" style="color: ' + scoreColor + '">' + scorePct.toFixed(1) + '%</span>' +
+                '<span class="text-xs font-semibold uppercase tracking-wide" style="color: ' + scoreColor + '">' + scoreText + '</span>' +
+              '</div>' +
+              '<div class="mt-xs text-sm text-muted leading-relaxed">' + escapeHtml(r.snippet) + '...</div>';
 
-                if (data.error) {
-                    errorMsg.textContent = data.error;
-                    errorMsg.classList.add('show');
-                    return;
-                }
-
-                resultsList.innerHTML = '';
-                if (data.results.length === 0) {
-                    resultsList.innerHTML = '<div class="no-results">Tidak ada dokumen yang cocok.</div>';
-                    document.getElementById('sortInfo').style.display = 'none';
-                } else {
-                    // PERUBAHAN: render card dengan progress bar
-                    data.results.forEach(r => {
-                        const card = document.createElement('div');
-                        card.className = 'result-card';
-                        const langLabel = r.language === 'en' ? 'EN' : 'ID';
-                        const langClass = r.language === 'en' ? 'en' : 'id';
-                        const scorePct = (r.score * 100);
-                        const barClass = scorePct >= 70 ? 'high' : (scorePct >= 40 ? 'medium' : 'low');
-                        card.innerHTML = `
-                            <div class="result-top">
-                                <span class="result-rank">${r.rank}</span>
-                                <span class="result-filename">${escapeHtml(r.filename)}</span>
-                                <span class="result-lang ${langClass}">${langLabel}</span>
-                            </div>
-                            <div class="result-score-row">
-                                <span class="result-score-label">Kemiripan:</span>
-                                <div class="result-progress-wrap">
-                                    <div class="result-progress-bar ${barClass}" style="width: ${scorePct}%"></div>
-                                </div>
-                                <span class="result-score-value" style="color: var(--${barClass === 'high' ? 'success' : (barClass === 'medium' ? 'warning' : 'accent')})">${scorePct.toFixed(1)}%</span>
-                            </div>
-                            <div class="result-snippet">${escapeHtml(r.snippet)}...</div>
-                        `;
-                        resultsList.appendChild(card);
-                    });
-                    document.getElementById('sortInfo').style.display = 'block';
-                }
-
-                resultCount.textContent = data.total > 0
-                    ? `Menampilkan ${data.total} hasil untuk "${escapeHtml(query)}"`
-                    : '';
-                results.classList.add('show');
-            })
-            .catch(err => {
-                loading.classList.remove('show');
-                searchBtn.disabled = false;
-                errorMsg.textContent = 'Terjadi kesalahan: ' + err.message;
-                errorMsg.classList.add('show');
-            });
+            resultsList.appendChild(card);
+          });
+          document.getElementById('sortInfo').style.display = 'block';
         }
 
-        searchBtn.addEventListener('click', doSearch);
-        searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
-    </script>
+        resultCount.textContent = data.total > 0
+          ? 'Menampilkan ' + data.total + ' hasil untuk "' + escapeHtml(query) + '"'
+          : '';
+        results.classList.add('show');
+      })
+      .catch(err => {
+        loading.classList.remove('show');
+        searchBtn.disabled = false;
+        errorMsg.textContent = 'Terjadi kesalahan: ' + err.message;
+        errorMsg.classList.add('show');
+      });
+    }
+
+    // === Event listeners ===
+    searchBtn.addEventListener('click', doSearch);
+    searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+
+    // === Custom language dropdown ===
+    const langBtn = document.getElementById('langDropdownBtn');
+    const langPanel = document.getElementById('langPanel');
+    const langDisplay = document.getElementById('langDisplay');
+    const langChevron = document.getElementById('langChevron');
+
+    langBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = langPanel.classList.contains('opacity-100');
+      langPanel.classList.toggle('opacity-100', !isOpen);
+      langPanel.classList.toggle('invisible', isOpen);
+      langPanel.classList.toggle('visible', !isOpen);
+      langChevron.classList.toggle('rotate-180', !isOpen);
+    });
+
+    langPanel.querySelectorAll('[data-lang]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const val = btn.getAttribute('data-lang');
+        langFilter.value = val;
+        langDisplay.textContent = btn.textContent;
+        langPanel.classList.remove('opacity-100', 'visible');
+        langPanel.classList.add('invisible');
+        langChevron.classList.remove('rotate-180');
+      });
+    });
+
+    document.addEventListener('click', () => {
+      langPanel.classList.remove('opacity-100', 'visible');
+      langPanel.classList.add('invisible');
+      langChevron.classList.remove('rotate-180');
+    });
+
+    // === Reveal animations via IntersectionObserver ===
+    const revealItems = document.querySelectorAll('.reveal');
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+      revealItems.forEach(item => item.classList.add('is-visible'));
+    } else {
+      const revealObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.2, rootMargin: '0px 0px -10% 0px' });
+      revealItems.forEach(item => revealObserver.observe(item));
+    }
+  </script>
 </body>
 </html>

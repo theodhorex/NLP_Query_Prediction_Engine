@@ -1,0 +1,207 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --color-primary: #0052ff;
+  --color-primary-active: #003ecc;
+  --color-primary-disabled: #a8b8cc;
+  --color-ink: #0a0b0d;
+  --color-body: #5b616e;
+  --color-muted: #7c828a;
+  --color-muted-soft: #a8acb3;
+  --color-hairline: #dee1e6;
+  --color-hairline-soft: #eef0f3;
+  --color-canvas: #ffffff;
+  --color-surface-soft: #f7f7f7;
+  --color-surface-strong: #eef0f3;
+  --color-surface-dark: #0a0b0d;
+  --color-surface-dark-elevated: #16181c;
+  --color-on-primary: #ffffff;
+  --color-on-dark: #ffffff;
+  --color-on-dark-soft: #a8acb3;
+  --color-semantic-up: #05b169;
+  --color-semantic-down: #cf202f;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  z-index: 9999;
+  padding: 8px 16px;
+  background: #0052ff;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.2s;
+}
+.skip-link:focus {
+  top: 0;
+  outline: 2px solid #0052ff;
+  outline-offset: 2px;
+}
+
+.js-hidden { display: none; }
+.show { display: block; }
+
+.spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 3px solid #dee1e6;
+  border-top-color: #0052ff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+  will-change: opacity, transform;
+}
+.reveal-left { transform: translate3d(-24px, 0, 0); }
+.reveal-right { transform: translate3d(24px, 0, 0); }
+.reveal-down { transform: translate3d(0, -18px, 0); }
+.reveal.is-visible { opacity: 1; transform: translate3d(0, 0, 0); }
+.reveal-delay-1 { transition-delay: 0.08s; }
+.reveal-delay-2 { transition-delay: 0.16s; }
+.reveal-delay-3 { transition-delay: 0.24s; }
+.reveal-delay-4 { transition-delay: 0.32s; }
+.lifecycle-step { padding: 32px 24px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.lifecycle-step:last-child { border-bottom: none; }
+@media (min-width: 768px) {
+  .lifecycle-step { border-right: 1px solid rgba(255,255,255,0.08); }
+  .lifecycle-step:nth-child(2n) { border-right: none; }
+  .lifecycle-step:nth-last-child(-n+2) { border-bottom: none; }
+}
+@media (min-width: 1024px) {
+  .lifecycle-step { border-bottom: none; }
+  .lifecycle-step:nth-child(2n) { border-right: 1px solid rgba(255,255,255,0.08); }
+  .lifecycle-step:last-child { border-right: none; }
+  .lifecycle-step:nth-last-child(-n+4) { border-bottom: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .nav-entrance, .nav-item, .hover-lift, .btn-scale, .section-shape { opacity: 1; transform: none; transition: none; animation: none; }
+}
+
+/* === Nav entrance === */
+@keyframes slideDown {
+  from { opacity: 0; transform: translate3d(0, -100%, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.nav-entrance {
+  animation: slideDown 0.5s ease both;
+}
+
+/* === Nav item staggered entrance === */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.nav-item {
+  animation: fadeInUp 0.4s ease both;
+}
+.nav-item:nth-child(1) { animation-delay: 0.05s; }
+.nav-item:nth-child(2) { animation-delay: 0.10s; }
+.nav-item:nth-child(3) { animation-delay: 0.15s; }
+.nav-item:nth-child(4) { animation-delay: 0.20s; }
+.nav-item:nth-child(5) { animation-delay: 0.25s; }
+
+/* === Hover lift === */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.hover-lift:hover {
+  transform: translate3d(0, -4px, 0);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
+  border-color: var(--color-hairline);
+}
+
+/* === Button scale === */
+.btn-scale {
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-scale:hover {
+  transform: scale(1.03);
+}
+.btn-scale:active {
+  transform: scale(0.97);
+}
+
+/* === Section shape: subtle decorative line animation === */
+@keyframes growLine {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.section-shape {
+  position: relative;
+}
+.section-shape::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 80px;
+  height: 2px;
+  background: var(--color-primary);
+  opacity: 0.3;
+  animation: growLine 0.8s ease 0.3s both;
+}
+
+/* === Lifecycle step hover === */
+.lifecycle-step {
+  padding: 32px 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+.lifecycle-step:hover {
+  background-color: rgba(255,255,255,0.02);
+  border-color: rgba(255,255,255,0.15);
+}
+.lifecycle-step:last-child { border-bottom: none; }
+
+/* === Prediction badge hover === */
+.pred-badge {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.pred-badge:hover {
+  transform: translate3d(0, -2px, 0);
+  box-shadow: 0 8px 20px rgba(0, 82, 255, 0.08);
+}
+
+/* === History item hover === */
+.history-item {
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.history-item:hover {
+  transform: translate3d(0, -1px, 0);
+}
+
+/* === Number counter entrance === */
+@keyframes countPop {
+  0% { opacity: 0; transform: scale(0.6); }
+  70% { transform: scale(1.08); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.count-pop {
+  animation: countPop 0.5s ease both;
+}
+.count-pop:nth-child(1) { animation-delay: 0.1s; }
+.count-pop:nth-child(2) { animation-delay: 0.2s; }
+.count-pop:nth-child(3) { animation-delay: 0.3s; }
+.count-pop:nth-child(4) { animation-delay: 0.4s; }
