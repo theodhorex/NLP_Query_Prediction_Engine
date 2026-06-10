@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="static/logo.png" alt="Query Prediction Engine" width="140" style="margin-bottom:12px;">
+<img src="static/readme_logo.png" alt="Query Prediction Engine" width="140" style="margin-bottom:12px;">
 
 # Query Prediction Engine
 
