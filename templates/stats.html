@@ -98,6 +98,9 @@
       <div class="js-hidden text-center py-xxl show" id="loading">
         <div class="spinner" aria-label="Memuat statistik..."></div>
       </div>
+      <div id="stats-loading" style="text-align:center; padding: 48px; color: #6B7280; font-family: inherit;">
+        Memuat data statistik korpus...
+      </div>
 
       <!-- Overview Cards -->
       <div class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-base mb-xxl reveal" id="overviewGrid">
@@ -214,6 +217,8 @@
       .then(data => {
         if (data.error) throw new Error(data.error);
 
+        const loadingEl = document.getElementById('stats-loading');
+        if (loadingEl) loadingEl.remove();
         loading.classList.remove('show');
         overviewGrid.classList.remove('hidden');
         statsGrid.classList.remove('hidden');

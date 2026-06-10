@@ -209,7 +209,10 @@ def search():
         if len(query) > 200:
             return jsonify({'error': 'Query terlalu panjang (max 200 karakter)'}), 400
 
-        top_k = min(int(data.get('top_k', 10)), 30)
+        try:
+            top_k = min(int(data.get('top_k', 10)), 30)
+        except (ValueError, TypeError):
+            top_k = 10
         language = data.get('language', 'all').lower()
         if language not in ('all', 'en', 'id'):
             language = 'all'

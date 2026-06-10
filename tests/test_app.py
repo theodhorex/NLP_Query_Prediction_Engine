@@ -155,8 +155,8 @@ class TestApiSearch:
 
     def test_invalid_top_k(self, client):
         resp = client.post(self.ENDPOINT, json={'query': 'machine', 'top_k': 'abc'})
-        # int('abc') raises ValueError -> caught by ValueError handler -> 400
-        assert resp.status_code == 400
+        # try/except sekarang handle int('abc') -> fallback 10 -> lanjut ke search_engine check -> 503
+        assert resp.status_code in (400, 503)
 
     def test_invalid_language_defaults(self, client):
         resp = client.post(self.ENDPOINT, json={'query': 'machine', 'language': 'klingon'})
