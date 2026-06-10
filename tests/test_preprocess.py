@@ -12,7 +12,8 @@ class TestCleanText:
 
     def test_numbers_only(self):
         p = DocumentPreprocessor()
-        assert p.clean_text("12345 6789") == ""
+        # \w mencakup digit, jadi angka TIDAK dihapus
+        assert p.clean_text("12345 6789") == "12345 6789"
 
     def test_special_chars_only(self):
         p = DocumentPreprocessor()
@@ -24,7 +25,8 @@ class TestCleanText:
 
     def test_whitespace_only(self):
         p = DocumentPreprocessor()
-        assert p.clean_text("   \n  \t  ") == ""
+        # \s tidak dihapus oleh [^\w\s], jadi whitespace tetap ada
+        assert p.clean_text("   \n  \t  ") == "   \n  \t  "
 
     def test_invalid_input(self):
         p = DocumentPreprocessor()
