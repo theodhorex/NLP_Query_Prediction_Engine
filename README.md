@@ -39,7 +39,7 @@ Search queries are everywhere. Users type the first few words and expect the sys
 - Run on 2GB RAM or less
 
 <p align="center">
-    <img src="static/logo.png" alt="Query Prediction Engine" width="140" />
+    <img src="static/readme_logo.png" alt="Query Prediction Engine" width="140" />
 </p>
 
 # Query Prediction Engine
