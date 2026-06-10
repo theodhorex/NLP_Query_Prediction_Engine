@@ -48,7 +48,7 @@ class CorpusIndex:
         ]
 
         self.vectorizer = TfidfVectorizer(
-            max_df=0.85,
+            max_df=1.0,
             min_df=1,
             sublinear_tf=True
         )
@@ -67,8 +67,6 @@ class CorpusIndex:
             tokens = [t for t in tokens if t.isalpha() and t not in _en_stopwords]
         else:
             tokens = [t for t in tokens if t.isalpha() and t not in _id_stopwords]
-            if _has_sastrawi:
-                tokens = [stemmer.stem(t) for t in tokens]
         return ' '.join(tokens)
 
     def search(self, query_clean: str, top_k: int = 10) -> list[dict[str, Any]]:
