@@ -73,67 +73,62 @@ class LanguageModel:
             if not query_words:
                 raise ValueError("No valid query words after filtering")
 
-            predictions = []
+            vocab_size = len(self.vocabulary) or 1
 
-            if len(query_words) == 1:
-                word = query_words[0]
-                if not word:
-                    raise ValueError("Query word cannot be empty")
-
-                candidates = {}
-
-                for (w1, w2), count in self.bigrams.items():
-                    if w1.startswith(word) and len(word) >= 2:
-                        prob = count / self.unigrams[w1] if self.unigrams[w1] > 0 else 0
-                        candidates[w2] = (prob, count)
-                    elif w1 == word:
-                        prob = count / self.unigrams[w1] if self.unigrams[w1] > 0 else 0
-                        candidates[w2] = (prob, count)
-
-                sorted_candidates = sorted(candidates.items(), key=lambda x: x[1][0], reverse=True)
-                predictions = [
-                    {'word': word, 'probability': prob, 'count': count}
-                    for word, (prob, count) in sorted_candidates[:10]
-                ]
-
-            elif len(query_words) >= 2:
+            # Step 1: coba trigram jika tersedia 2 kata konteks
+            if len(query_words) >= 2:
                 w1, w2 = query_words[-2], query_words[-1]
 
-                if not w1 or not w2:
-                    raise ValueError("Query words cannot be empty")
-
-                candidates = {}
-
-                for (tw1, tw2, tw3), count in self.trigrams.items():
-                    if tw1 == w1 and tw2.startswith(w2) and len(w2) >= 2:
-                        prob = count / self.bigrams.get((w1, w2), 1) if self.bigrams.get((w1, w2), 0) > 0 else 0
-                        candidates[tw3] = (prob, count)
-                    elif tw1 == w1 and tw2 == w2:
-                        prob = count / self.bigrams.get((w1, w2), 1) if self.bigrams.get((w1, w2), 0) > 0 else 0
-                        candidates[tw3] = (prob, count)
-
-                sorted_candidates = sorted(candidates.items(), key=lambda x: x[1][0], reverse=True)
-                predictions = [
-                    {'word': word, 'probability': prob, 'count': count}
-                    for word, (prob, count) in sorted_candidates[:10]
-                ]
-
-                if not predictions:
+                if w1 and w2:
                     candidates = {}
-                    for (tw1, tw2), count in self.bigrams.items():
-                        if tw1.startswith(w2) and len(w2) >= 2:
-                            prob = count / self.unigrams[tw1] if self.unigrams[tw1] > 0 else 0
-                            candidates[tw2] = (prob, count)
-                        elif tw1 == w2:
-                            prob = count / self.unigrams[w2] if self.unigrams[w2] > 0 else 0
-                            candidates[tw2] = (prob, count)
+                    total_context = self.bigrams.get((w1, w2), 0)
 
+                    for (tw1, tw2, tw3), count in self.trigrams.items():
+                        if tw1 == w1 and tw2 == w2:
+                            prob = (count + 1) / (total_context + vocab_size) if total_context > 0 else 0
+                            candidates[tw3] = (prob, count)
+                        elif tw1 == w1 and tw2.startswith(w2) and len(w2) >= 2 and tw2 != w2:
+                            prob = (count + 1) / (total_context + vocab_size) if total_context > 0 else 0
+                            existing = candidates.get(tw3)
+                            if existing is None or prob > existing[0]:
+                                candidates[tw3] = (prob, count)
+
+                    if candidates:
+                        sorted_candidates = sorted(candidates.items(), key=lambda x: x[1][0], reverse=True)
+                        return [
+                            {'word': w, 'probability': prob, 'count': cnt}
+                            for w, (prob, cnt) in sorted_candidates[:10]
+                        ]
+
+            # Step 2: coba bigram dengan kata terakhir sebagai konteks
+            last_word = query_words[-1]
+            if last_word:
+                candidates = {}
+                total_context = self.unigrams.get(last_word, 0)
+
+                for (w1, w2), count in self.bigrams.items():
+                    if w1 == last_word:
+                        prob = (count + 1) / (total_context + vocab_size) if total_context > 0 else 0
+                        candidates[w2] = (prob, count)
+                    elif w1.startswith(last_word) and len(last_word) >= 2 and w1 != last_word:
+                        prob = (count + 1) / (self.unigrams.get(w1, 0) + vocab_size) if self.unigrams.get(w1, 0) > 0 else 0
+                        existing = candidates.get(w2)
+                        if existing is None or prob > existing[0]:
+                            candidates[w2] = (prob, count)
+
+                if candidates:
                     sorted_candidates = sorted(candidates.items(), key=lambda x: x[1][0], reverse=True)
-                    predictions = [
-                        {'word': word, 'probability': prob, 'count': count}
-                        for word, (prob, count) in sorted_candidates[:10]
+                    return [
+                        {'word': w, 'probability': prob, 'count': cnt}
+                        for w, (prob, cnt) in sorted_candidates[:10]
                     ]
 
+            # Step 3: fallback unigram — ambil kata paling frequent
+            total_all = sum(self.unigrams.values()) or 1
+            predictions = [
+                {'word': w, 'probability': c / total_all, 'count': c}
+                for w, c in self.unigrams.most_common(10)
+            ]
             return predictions
 
         except ValueError as e:

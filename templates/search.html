@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pencarian Dokumen — Query Prediction Engine</title>
+    <meta name="description" content="Pencarian dokumen bilingual menggunakan TF-IDF dan Cosine Similarity.">
+    <link rel="icon" href="/static/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #0f1117;
+            --bg-secondary: #1a1d2e;
+            --bg-card: #1e2235;
+            --accent: #6c63ff;
+            --accent-hover: #5a52d5;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border: #2d3748;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+        nav { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; border-bottom: 1px solid var(--border); margin-bottom: 40px; }
+        .nav-logo { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); text-decoration: none; }
+        .nav-links { display: flex; gap: 24px; list-style: none; }
+        .nav-links a { text-decoration: none; color: var(--text-secondary); font-size: 0.9rem; }
+        .nav-links a:hover { color: var(--text-primary); }
+        @media (max-width: 640px) { .nav-links { display: none; } }
+        .header { text-align: center; margin-bottom: 32px; }
+        .header h1 { font-size: 2rem; margin-bottom: 8px; }
+        .header p { color: var(--text-secondary); font-size: 1rem; }
+        .search-box { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+        .search-row { display: flex; gap: 12px; }
+        .search-input { flex: 1; padding: 14px 18px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--bg-card); color: var(--text-primary); }
+        .search-input:focus { outline: none; border-color: var(--accent); }
+        .search-input::placeholder { color: var(--text-muted); }
+        .search-btn { padding: 14px 28px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 500; cursor: pointer; transition: background 0.2s; }
+        .search-btn:hover { background: var(--accent-hover); }
+        .search-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .filter-row { display: flex; gap: 12px; margin-top: 14px; align-items: center; }
+        .filter-row label { font-size: 0.85rem; color: var(--text-secondary); }
+        .filter-select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; background: var(--bg-card); color: var(--text-primary); }
+        .error-msg { display: none; padding: 12px 16px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; color: var(--error); margin-bottom: 16px; }
+        .error-msg.show { display: block; }
+        .loading { display: none; text-align: center; padding: 40px; }
+        .loading.show { display: block; }
+        .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .results { display: none; }
+        .results.show { display: block; }
+        .result-count { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px; }
+        // PERUBAHAN: sort indicator
+        .sort-info { font-size: 0.75rem; color: var(--text-muted); font-style: italic; margin-bottom: 16px; }
+        // PERUBAHAN: result card dark theme + progress bar
+        .result-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 12px; transition: border-color 0.2s; }
+        .result-card:hover { border-color: var(--accent); }
+        .result-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .result-rank { width: 24px; height: 24px; background: var(--accent); color: white; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; flex-shrink: 0; }
+        .result-filename { font-weight: 600; color: var(--text-primary); }
+        .result-lang { font-size: 0.7rem; padding: 2px 8px; border-radius: 999px; font-weight: 600; text-transform: uppercase; }
+        .result-lang.en { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+        .result-lang.id { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+        // PERUBAHAN: progress bar + score label
+        .result-score-row { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+        .result-score-label { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; }
+        .result-progress-wrap { flex: 1; height: 8px; background: var(--bg-secondary); border-radius: 999px; overflow: hidden; }
+        .result-progress-bar { height: 100%; border-radius: 999px; transition: width 0.4s ease; }
+        .result-progress-bar.high { background: var(--success); }
+        .result-progress-bar.medium { background: var(--warning); }
+        .result-progress-bar.low { background: var(--accent); }
+        .result-score-value { font-size: 0.85rem; font-family: 'JetBrains Mono', monospace; font-weight: 600; white-space: nowrap; min-width: 4ch; text-align: right; }
+        .result-snippet { margin-top: 10px; font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; }
+        .no-results { text-align: center; padding: 40px; color: var(--text-secondary); border: 1px dashed var(--border); border-radius: 8px; background: var(--bg-card); }
+        footer { margin-top: 60px; padding: 24px 0; border-top: 1px solid var(--border); text-align: center; font-size: 0.85rem; color: var(--text-muted); }
+    </style>
+</head>
+<body>
+    <nav class="container">
+        <a href="/" class="nav-logo">Query Engine</a>
+        <ul class="nav-links">
+            <li><a href="/">Prediksi</a></li>
+            <li><a href="/stats">Statistik</a></li>
+            <li><a href="/search" style="color: var(--bg-dark); font-weight: 600;">Pencarian</a></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        <div class="header">
+            <h1>Pencarian Dokumen Bilingual</h1>
+            <p>Cari di 30 dokumen EN + 3 dokumen ID menggunakan TF-IDF dan Cosine Similarity.</p>
+        </div>
+
+        <div class="search-box">
+            <div class="search-row">
+                <input type="text" id="searchInput" class="search-input" placeholder="Cth: machine learning, kecerdasan buatan, NLP" autocomplete="off">
+                <button id="searchBtn" class="search-btn">Cari</button>
+            </div>
+            <div class="filter-row">
+                <label for="langFilter">Bahasa:</label>
+                <select id="langFilter" class="filter-select">
+                    <option value="all">Semua</option>
+                    <option value="en">Inggris</option>
+                    <option value="id">Indonesia</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="error-msg" id="errorMsg"></div>
+        <div class="loading" id="loading"><div class="spinner"></div></div>
+
+        <div class="results" id="results">
+            <div class="result-count" id="resultCount"></div>
+            // PERUBAHAN: sort indicator
+            <div class="sort-info" id="sortInfo">Diurutkan berdasarkan cosine similarity tertinggi</div>
+            <div id="resultsList"></div>
+        </div>
+    </main>
+
+    <footer>
+        NLP Query Prediction Engine · TF-IDF Search · UKDW 2026
+    </footer>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const results = document.getElementById('results');
+        const resultsList = document.getElementById('resultsList');
+        const resultCount = document.getElementById('resultCount');
+        const errorMsg = document.getElementById('errorMsg');
+        const loading = document.getElementById('loading');
+        const langFilter = document.getElementById('langFilter');
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function doSearch() {
+            const query = searchInput.value.trim();
+            const language = langFilter.value;
+            errorMsg.classList.remove('show');
+            results.classList.remove('show');
+
+            if (!query) {
+                errorMsg.textContent = 'Query tidak boleh kosong';
+                errorMsg.classList.add('show');
+                return;
+            }
+
+            if (query.length > 200) {
+                errorMsg.textContent = 'Query terlalu panjang (max 200 karakter)';
+                errorMsg.classList.add('show');
+                return;
+            }
+
+            loading.classList.add('show');
+            searchBtn.disabled = true;
+
+            fetch('/api/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query, top_k: 10, language })
+            })
+            .then(res => res.json())
+            .then(data => {
+                loading.classList.remove('show');
+                searchBtn.disabled = false;
+
+                if (data.error) {
+                    errorMsg.textContent = data.error;
+                    errorMsg.classList.add('show');
+                    return;
+                }
+
+                resultsList.innerHTML = '';
+                if (data.results.length === 0) {
+                    resultsList.innerHTML = '<div class="no-results">Tidak ada dokumen yang cocok.</div>';
+                    document.getElementById('sortInfo').style.display = 'none';
+                } else {
+                    // PERUBAHAN: render card dengan progress bar
+                    data.results.forEach(r => {
+                        const card = document.createElement('div');
+                        card.className = 'result-card';
+                        const langLabel = r.language === 'en' ? 'EN' : 'ID';
+                        const langClass = r.language === 'en' ? 'en' : 'id';
+                        const scorePct = (r.score * 100);
+                        const barClass = scorePct >= 70 ? 'high' : (scorePct >= 40 ? 'medium' : 'low');
+                        card.innerHTML = `
+                            <div class="result-top">
+                                <span class="result-rank">${r.rank}</span>
+                                <span class="result-filename">${escapeHtml(r.filename)}</span>
+                                <span class="result-lang ${langClass}">${langLabel}</span>
+                            </div>
+                            <div class="result-score-row">
+                                <span class="result-score-label">Kemiripan:</span>
+                                <div class="result-progress-wrap">
+                                    <div class="result-progress-bar ${barClass}" style="width: ${scorePct}%"></div>
+                                </div>
+                                <span class="result-score-value" style="color: var(--${barClass === 'high' ? 'success' : (barClass === 'medium' ? 'warning' : 'accent')})">${scorePct.toFixed(1)}%</span>
+                            </div>
+                            <div class="result-snippet">${escapeHtml(r.snippet)}...</div>
+                        `;
+                        resultsList.appendChild(card);
+                    });
+                    document.getElementById('sortInfo').style.display = 'block';
+                }
+
+                resultCount.textContent = data.total > 0
+                    ? `Menampilkan ${data.total} hasil untuk "${escapeHtml(query)}"`
+                    : '';
+                results.classList.add('show');
+            })
+            .catch(err => {
+                loading.classList.remove('show');
+                searchBtn.disabled = false;
+                errorMsg.textContent = 'Terjadi kesalahan: ' + err.message;
+                errorMsg.classList.add('show');
+            });
+        }
+
+        searchBtn.addEventListener('click', doSearch);
+        searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+    </script>
+</body>
+</html>

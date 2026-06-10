@@ -10,6 +10,7 @@ sys.path.insert(0, scripts_path)
 
 from preprocess import DocumentPreprocessor
 from language_model import LanguageModel
+from search_engine import SearchEngine
 
 app = Flask(__name__)
 
@@ -20,9 +21,13 @@ prediction_history = []
 MAX_HISTORY = 200
 
 CORPUS_PATH = os.path.join(os.path.dirname(__file__), 'corpus')
+CORPUS_ID_PATH = os.path.join(os.path.dirname(__file__), 'corpus_id')
 MODEL_PATH = os.path.join(os.path.dirname(__file__), 'data', 'language_model.pkl')
 
+search_engine = None
+
 def load_or_build_model():
+    global search_engine
     try:
         if os.path.exists(MODEL_PATH):
             model.load_model(MODEL_PATH)
@@ -43,6 +48,13 @@ def load_or_build_model():
             print(f"Building n-gram model from {len(documents)} documents...")
             model.build_model(documents)
             model.save_model(MODEL_PATH)
+
+        try:
+            search_engine = SearchEngine(CORPUS_PATH, CORPUS_ID_PATH, preprocessor)
+            print("✓ Search engine initialized")
+        except Exception as e:
+            print(f"WARNING: Search engine failed to initialize: {str(e)}")
+            search_engine = None
 
         return model
 
@@ -178,6 +190,47 @@ def corpus_stats():
 @app.route('/stats')
 def stats_page():
     return render_template('stats.html')
+
+@app.route('/search')
+def search_page():
+    return render_template('search.html')
+
+@app.route('/api/search', methods=['POST'])
+def search():
+    try:
+        data = request.json
+        if not data:
+            return jsonify({'error': 'Request body is empty'}), 400
+
+        query = data.get('query', '').strip()
+        if not query:
+            return jsonify({'error': 'Query tidak boleh kosong'}), 400
+
+        if len(query) > 200:
+            return jsonify({'error': 'Query terlalu panjang (max 200 karakter)'}), 400
+
+        top_k = min(int(data.get('top_k', 10)), 30)
+        language = data.get('language', 'all').lower()
+        if language not in ('all', 'en', 'id'):
+            language = 'all'
+
+        if search_engine is None:
+            return jsonify({'error': 'Search engine tidak tersedia'}), 503
+
+        results = search_engine.search(query, top_k=top_k, language=language)
+
+        return jsonify({
+            'query': query,
+            'results': results,
+            'total': len(results),
+            'language_filter': language
+        })
+
+    except ValueError as e:
+        return jsonify({'error': f'Input tidak valid: {str(e)}'}), 400
+    except Exception as e:
+        print(f"Error in /api/search: {str(e)}")
+        return jsonify({'error': 'Terjadi kesalahan internal server'}), 500
 
 @app.errorhandler(404)
 def not_found(error):
